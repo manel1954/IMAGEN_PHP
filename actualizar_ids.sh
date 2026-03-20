@@ -5,8 +5,9 @@
                         sudo curl --fail -o DMRIds.dat -s http://www.pistar.uk/downloads/DMRIds.dat
                         #cp DMRIds.dat /home/pi/MMDVMHost/
                         sudo chmod 777 /home/pi/MMDVMHost/DMRIds.dat
-
+                        echo "*********************************************"
                         echo "IDS actualizados en MMDVMHost"
+                        echo "*********************************************"
                         sleep 4
 
                         
