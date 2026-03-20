@@ -406,7 +406,7 @@ if ($action === 'transmission') {
 
 <header class="ctrl-header">
   <img src="Logo_ea3eiz.png" alt="EA3EIZ" style="height:40px; width:auto;">
-  <h1>MMDVM &amp; YSF Control</h1>
+  <h1>MMDVM &amp; YSF Control prueba</h1>
   <span class="uptime" id="clock">--:--:--</span>
   <button id="btnReboot" class="btn-reboot" onclick="rebootPi()">⏻ Reiniciar Pi</button>
 </header>
