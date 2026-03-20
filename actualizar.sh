@@ -1,35 +1,10 @@
 ﻿#!/bin/bash
 
-sudo systemctl disable ysfgateway.service
-sudo systemctl disable dmr2ysf.service
-sudo systemctl disable analog_bridge.service
-sudo systemctl disable ircddbgatewayd.service
-sudo systemctl disable ircddbgateway.service
-sudo systemctl disable md380-emu.service
-sudo systemctl disable mmdvm_bridge.service
-sudo systemctl disable nxdngateway.service
-sudo systemctl disable p25gateway.servdisable
 
-dvswitch=$(awk "NR==18" /home/pi/status.ini)
-if [ "$dvswitch" = 'DVSWITCH=OFF' ];then
-sudo systemctl stop ysfgateway.service
-sudo systemctl stop dmr2ysf.service
-sudo systemctl stop analog_bridge.service
-sudo systemctl stop ircddbgatewayd.service
-sudo systemctl stop ircddbgateway.service
-sudo systemctl stop md380-emu.service
-sudo systemctl stop mmdvm_bridge.service
-sudo systemctl stop nxdngateway.service
-sudo systemctl stop p25gateway.service
-else
-echo "no hace nada"  
-fi
 
 # path usuario
-usuario="/home/pi"
-usuario="$usuario"
-fecha_imagen=$(awk "NR==1" /home/pi/version-fecha-actualizacion)
-nombre_imagen="FINAL"
+usuario="/home/pi/"
+nombre_imagen="PHP"
 version=$nombre_imagen$fecha_imagen
 
 
@@ -115,12 +90,12 @@ sleep 0.5
 
 # Done. GPIOs will return to input state after script ends
 
-bm=`sed -n '2p'  $usuario/MMDVMHost/MMDVMBM.ini`
-plus=`sed -n '2p'  $usuario/MMDVMHost/MMDVMPLUS.ini`
-dstar=`sed -n '2p'  $usuario/MMDVMHost/MMDVMDSTAR.ini`
-fusion=`sed -n '2p'  $usuario/MMDVMHost/MMDVMFUSION.ini`
-frbm=`sed -n '13p'  $usuario/MMDVMHost/MMDVMBM.ini`
-frplus=`sed -n '13p'  $usuario/MMDVMHost/MMDVMPLUS.ini`
+bm=`sed -n '2p'  $usuario/MMDVMHost/MMDVMHost.ini`
+plus=`sed -n '2p'  $usuario/MMDVMHost/MMDVMHost.ini`
+dstar=`sed -n '2p'  $usuario/MMDVMHost/MMDVMHost.ini`
+fusion=`sed -n '2p'  $usuario/MMDVMHost/MMDVMHost.ini`
+frbm=`sed -n '13p'  $usuario/MMDVMHost/MMDVMHost.ini`
+frplus=`sed -n '13p'  $usuario/MMDVMHost/MMDVMHost.ini`
 sudo wget -post-data http://associacioader.com/prueba1.php?callBM=$bm'&'callPLUS=$plus'&'masterBM=$masterbm'&'masterPLUS=$masterplus'&'radio=$masterradio'&'version=$version'&'ESPECIAL=$masterespecial'&'YSFGateway=$masterYSFGateway                      
 
 
