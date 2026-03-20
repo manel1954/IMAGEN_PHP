@@ -8,6 +8,8 @@
                         git pull --force                                                                
                         sudo chmod 777 -R /home/pi/IMAGEN_PHP
                         sleep 3
+                    read a
+                    
                         
 
                         
