@@ -6,7 +6,7 @@
                         #cp DMRIds.dat /home/pi/MMDVMHost/
                         sudo chmod 777 /home/pi/MMDVMHost/DMRIds.dat
 
-                        echo "IDS actualizados en MMDVMHostxxxxxx"
+                        echo "IDS actualizados en MMDVMHost"
                         sleep 4
 
                         
