@@ -49,7 +49,6 @@ if ($action === 'ysf-status') {
 }
 
 if ($action === 'ysf-start') {
-    // Solo arranca YSFGateway — NO toca mmdvmhost ni mmdvmysf
     shell_exec('sudo systemctl start ysfgateway 2>/dev/null');
     sleep(1);
     header('Content-Type: application/json');
@@ -58,7 +57,6 @@ if ($action === 'ysf-start') {
 }
 
 if ($action === 'ysf-stop') {
-    // Solo para YSFGateway
     shell_exec('sudo systemctl stop ysfgateway 2>/dev/null');
     header('Content-Type: application/json');
     echo json_encode(['ok' => true]);
@@ -74,7 +72,6 @@ if ($action === 'mmdvmysf-status') {
 }
 
 if ($action === 'mmdvmysf-start') {
-    // Solo arranca MMDVMHost YSF — NO toca mmdvmhost
     shell_exec('sudo systemctl start mmdvmysf 2>/dev/null');
     header('Content-Type: application/json');
     echo json_encode(['ok' => true]);
@@ -82,7 +79,6 @@ if ($action === 'mmdvmysf-start') {
 }
 
 if ($action === 'mmdvmysf-stop') {
-    // Para YSFGateway primero, luego MMDVMHost YSF
     shell_exec('sudo systemctl stop ysfgateway 2>/dev/null');
     sleep(1);
     shell_exec('sudo systemctl stop mmdvmysf 2>/dev/null');
@@ -189,6 +185,70 @@ if ($action === 'transmission') {
     echo json_encode(['active'=>$active,'callsign'=>$callsign,'name'=>$name,'dmrid'=>$dmrid,'tg'=>$tg,'slot'=>$slot,'source'=>$source,'lastHeard'=>$lastHeard]);
     exit;
 }
+
+// ── YSF Transmission ─────────────────────────────────────────────────────────
+if ($action === 'ysf-transmission') {
+    // Intenta mmdvmysf primero, luego ysfgateway
+    $log = shell_exec("sudo journalctl -u mmdvmysf -n 300 --no-pager --output=short 2>/dev/null");
+    $src_service = 'mmdvmysf';
+    if (empty(trim($log))) {
+        $log = shell_exec("sudo journalctl -u ysfgateway -n 300 --no-pager --output=short 2>/dev/null");
+        $src_service = 'ysfgateway';
+    }
+    $lines = array_reverse(explode("\n", $log));
+
+    $active = false; $callsign = ''; $name = ''; $dest = ''; $source = '';
+
+    foreach ($lines as $line) {
+        if (preg_match('/YSF.*end of (RF|network) voice/i', $line)) { $active = false; break; }
+        if (preg_match('/(\d{2}:\d{2}:\d{2}).*YSF.*received (RF|network) voice.*from\s+(\S+)/i', $line, $m)) {
+            $active   = true;
+            $source   = strtoupper($m[2]);
+            $callsign = strtoupper(trim($m[3]));
+            break;
+        }
+        // Patrón alternativo para algunas versiones de MMDVMHost YSF
+        if (preg_match('/(\d{2}:\d{2}:\d{2}).*YSF.*from\s+(\S+)\s+to\s+(\S+)/i', $line, $m)) {
+            $active   = true;
+            $source   = 'RF';
+            $callsign = strtoupper(trim($m[2]));
+            $dest     = trim($m[3]);
+            break;
+        }
+    }
+
+    if ($callsign) {
+        $info = lookupCall($callsign);
+        $name = $info['name'];
+    }
+
+    // Últimos 5 escuchados
+    $lastHeard = []; $seen = [];
+    foreach ($lines as $line) {
+        $cs = ''; $src = ''; $time = ''; $dst = '';
+        if (preg_match('/(\d{2}:\d{2}:\d{2}).*YSF.*received (RF|network) voice.*from\s+(\S+)/i', $line, $m)) {
+            $time = $m[1]; $src = strtoupper($m[2]); $cs = strtoupper(trim($m[3]));
+        } elseif (preg_match('/(\d{2}:\d{2}:\d{2}).*YSF.*from\s+(\S+)\s+to\s+(\S+)/i', $line, $m)) {
+            $time = $m[1]; $src = 'RF'; $cs = strtoupper(trim($m[2])); $dst = trim($m[3]);
+        }
+        if ($cs && !in_array($cs, $seen)) {
+            $inf = lookupCall($cs);
+            $lastHeard[] = [
+                'callsign' => $cs,
+                'name'     => $inf['name'],
+                'dest'     => $dst,
+                'source'   => $src,
+                'time'     => $time,
+            ];
+            $seen[] = $cs;
+            if (count($lastHeard) >= 5) break;
+        }
+    }
+
+    header('Content-Type: application/json');
+    echo json_encode(['active'=>$active,'callsign'=>$callsign,'name'=>$name,'dest'=>$dest,'source'=>$source,'lastHeard'=>$lastHeard]);
+    exit;
+}
 ?>
 <!DOCTYPE html>
 <html lang="es">
@@ -209,6 +269,7 @@ if ($action === 'transmission') {
     --amber:     #ffb300;
     --cyan:      #00d4ff;
     --violet:    #b57aff;
+    --violet-dim:#8a4dff;
     --text:      #a8b9cc;
     --text-dim:  #4a5568;
     --font-mono: 'Share Tech Mono', monospace;
@@ -308,8 +369,9 @@ if ($action === 'transmission') {
   .display-row { display: grid; grid-template-columns: 1fr 1fr; gap: 1.2rem; margin: 2rem 0; align-items: start; }
   @media (max-width: 900px) { .display-row { grid-template-columns: 1fr; } }
   .panel-label { font-family: var(--font-mono); font-size: .7rem; letter-spacing: .15em; color: var(--amber); text-transform: uppercase; margin-bottom: .5rem; }
+  .panel-label.ysf-label { color: var(--violet); }
 
-  /* ── Nextion ── */
+  /* ── Nextion DMR ── */
   .nextion {
     background: #060c10; border: 2px solid #1a3a4a; border-radius: 6px;
     box-shadow: 0 0 0 1px #0d2030, inset 0 0 40px rgba(0,212,255,.04), 0 0 30px rgba(0,212,255,.08);
@@ -319,44 +381,78 @@ if ($action === 'transmission') {
   .nextion::before, .nextion::after { content: '◈'; position: absolute; font-size: .6rem; color: #1a3a4a; }
   .nextion::before { top: .5rem; left: .7rem; }
   .nextion::after  { bottom: .5rem; right: .7rem; }
+
+  /* ── Nextion YSF (tema violeta) ── */
+  .nextion-ysf {
+    background: #08060e; border: 2px solid #2d1a4a; border-radius: 6px;
+    box-shadow: 0 0 0 1px #1a0d30, inset 0 0 40px rgba(181,122,255,.04), 0 0 30px rgba(181,122,255,.1);
+    position: relative; overflow: hidden; height: 210px;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .nextion-ysf::before, .nextion-ysf::after { content: '◈'; position: absolute; font-size: .6rem; color: #2d1a4a; }
+  .nextion-ysf::before { top: .5rem; left: .7rem; }
+  .nextion-ysf::after  { bottom: .5rem; right: .7rem; }
+
+  /* Barras superiores/inferiores compartidas */
   .nx-topbar {
     position: absolute; top: 0; left: 0; right: 0; height: 30px;
     background: #1c1c24; border-bottom: 1px solid #1a3a4a;
     display: flex; align-items: center; justify-content: space-between;
     padding: 0 1rem; font-family: var(--font-mono); font-size: .65rem; color: #2a5a7a; letter-spacing: .1em;
   }
+  .nx-topbar.ysf-bar {
+    background: #1a1424; border-bottom: 1px solid #2d1a4a; color: #4a2a7a;
+  }
   .nx-topbar .nx-mode { color: var(--cyan); opacity: .7; }
+  .nx-topbar.ysf-bar .nx-mode { color: var(--violet); opacity: .8; }
   .nx-topbar .nx-tg   { color: var(--amber); opacity: .85; min-width: 5rem; text-align: right; }
+  .nx-topbar.ysf-bar .nx-dest { color: #d4a8ff; opacity: .85; min-width: 5rem; text-align: right; font-size: .6rem; }
+
   .nx-botbar {
     position: absolute; bottom: 0; left: 0; right: 0; height: 28px;
     background: #0d1e2a; border-top: 1px solid #1a3a4a;
     display: flex; align-items: center; justify-content: space-between;
     padding: 0 1rem; font-family: var(--font-mono); font-size: .65rem; color: #2a5a7a; letter-spacing: .08em;
   }
+  .nx-botbar.ysf-bar {
+    background: #110d1e; border-top: 1px solid #2d1a4a; color: #4a2a7a;
+  }
   .nx-botbar .nx-dmrid { color: #3a6a8a; min-width: 6rem; }
   .nx-botbar .nx-source { padding: .1rem .45rem; border-radius: 2px; font-size: .6rem; letter-spacing: .1em; }
   .nx-botbar .nx-source.rf  { background: rgba(0,255,159,.15); color: var(--green); border: 1px solid rgba(0,255,159,.3); }
   .nx-botbar .nx-source.net { background: rgba(0,212,255,.15); color: var(--cyan);  border: 1px solid rgba(0,212,255,.3); }
+
+  /* VU meters */
   .nx-vu { position: absolute; left: 1rem; top: 38px; bottom: 32px; width: 6px; display: flex; flex-direction: column-reverse; gap: 2px; }
   .nx-vu.right { left: auto; right: 1rem; }
   .nx-vu-bar { height: 5px; border-radius: 1px; background: #0d2030; transition: background .08s; }
-  .nx-vu-bar.lit-g { background: var(--green); box-shadow: 0 0 4px var(--green); }
-  .nx-vu-bar.lit-a { background: var(--amber); box-shadow: 0 0 4px var(--amber); }
-  .nx-vu-bar.lit-r { background: var(--red);   box-shadow: 0 0 4px var(--red); }
+  .nx-vu-bar.lit-g  { background: var(--green);  box-shadow: 0 0 4px var(--green); }
+  .nx-vu-bar.lit-a  { background: var(--amber);  box-shadow: 0 0 4px var(--amber); }
+  .nx-vu-bar.lit-r  { background: var(--red);    box-shadow: 0 0 4px var(--red); }
+  .nx-vu-bar.lit-v  { background: var(--violet);  box-shadow: 0 0 4px var(--violet); }
+  .nx-vu-bar.lit-vd { background: #d4a8ff;        box-shadow: 0 0 4px #d4a8ff; }
+
   .nx-txbar { position: absolute; bottom: 28px; left: 0; right: 0; height: 3px; }
   .nx-txbar.active {
     background: linear-gradient(90deg, transparent 0%, var(--green) 50%, transparent 100%);
     background-size: 200% 100%; animation: scan 1.4s linear infinite;
   }
+  .nx-txbar.active-ysf {
+    background: linear-gradient(90deg, transparent 0%, var(--violet) 50%, transparent 100%);
+    background-size: 200% 100%; animation: scan 1.4s linear infinite;
+  }
   @keyframes scan { from{background-position:200% 0} to{background-position:-200% 0} }
+
   .nx-center { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: .15rem; z-index: 1; }
-  .nx-clock { font-family: var(--font-orb); font-size: 4rem; font-weight: 700; color: #f5bd06; letter-spacing: .06em; line-height: 1; }
-  .nx-date  { font-family: var(--font-mono); font-size: .7rem; color: #ff0; letter-spacing: .12em; text-transform: uppercase; margin-top: .2rem; }
+  .nx-clock    { font-family: var(--font-orb); font-size: 4rem; font-weight: 700; color: #f5bd06; letter-spacing: .06em; line-height: 1; }
+  .nx-date     { font-family: var(--font-mono); font-size: .7rem; color: #ff0; letter-spacing: .12em; text-transform: uppercase; margin-top: .2rem; }
   .nx-callsign { font-family: var(--font-orb); font-size: 3.4rem; font-weight: 900; letter-spacing: .04em; line-height: 1; color: var(--green); text-shadow: 0 0 20px rgba(0,255,159,.55), 0 0 60px rgba(0,255,159,.2); animation: glow-in .3s ease; }
-  .nx-name { font-family: var(--font-ui); font-weight: 500; font-size: 1.2rem; color: var(--cyan); letter-spacing: .18em; text-transform: uppercase; opacity: .9; margin-top: .15rem; }
+  .nx-callsign.ysf { color: var(--violet); text-shadow: 0 0 20px rgba(181,122,255,.6), 0 0 60px rgba(181,122,255,.25); }
+  .nx-name  { font-family: var(--font-ui); font-weight: 500; font-size: 1.2rem; color: var(--cyan); letter-spacing: .18em; text-transform: uppercase; opacity: .9; margin-top: .15rem; }
+  .nx-name.ysf { color: #d4a8ff; }
   @keyframes glow-in { from{opacity:0;transform:scale(.96)} to{opacity:1;transform:scale(1)} }
 
-  /* ══ LAST HEARD ══ */
+  /* ══ LAST HEARD (DMR) ══ */
   .lh-panel { background: var(--surface); border: 3px solid #1a3a4a; border-radius: 6px; display: flex; flex-direction: column; }
   .lh-header {
     background: #1c1c24; border-bottom: 1px solid var(--border); padding: .4rem 1rem;
@@ -382,6 +478,23 @@ if ($action === 'transmission') {
   .lh-src.net { color: var(--cyan); }
   .lh-empty { padding: 1.5rem 1rem; font-family: var(--font-mono); font-size: .72rem; color: var(--text-dim); text-align: center; }
 
+  /* ══ LAST HEARD YSF ══ */
+  .lh-panel-ysf { background: var(--surface); border: 3px solid #2d1a4a; border-radius: 6px; display: flex; flex-direction: column; }
+  .lh-header-ysf {
+    background: #1a1424; border-bottom: 1px solid #2d1a4a; padding: .4rem 1rem;
+    display: grid; grid-template-columns: 1.2fr 1.8fr 1fr .6fr;
+    gap: .3rem; font-family: var(--font-mono); font-size: .6rem; color: #4a2a7a; letter-spacing: .1em; text-transform: uppercase;
+  }
+  .lh-row-ysf { display: grid; grid-template-columns: 1.2fr 1.8fr 1fr .6fr; gap: .3rem; padding: .45rem 1rem; border-bottom: 1px solid rgba(45,26,74,.5); align-items: center; transition: background .2s; }
+  .lh-row-ysf:last-child { border-bottom: none; }
+  .lh-row-ysf:hover { background: rgba(181,122,255,.04); }
+  .lh-row-ysf.lh-active { background: rgba(181,122,255,.08); }
+  .lh-tx-dot-ysf { width: 6px; height: 6px; border-radius: 50%; background: var(--violet); box-shadow: 0 0 6px var(--violet); animation: pulse 1s infinite; flex-shrink: 0; }
+  .lh-call-ysf { font-family: var(--font-mono); font-size: .82rem; color: var(--violet); letter-spacing: .05em; font-weight: bold; }
+  .lh-row-ysf.lh-active .lh-call-ysf { text-shadow: 0 0 8px rgba(181,122,255,.5); }
+  .lh-src-ysf.rf  { color: var(--green); font-family: var(--font-mono); font-size: .6rem; }
+  .lh-src-ysf.net { color: var(--cyan);  font-family: var(--font-mono); font-size: .6rem; }
+
   /* ── logs ── */
   .log-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1.2rem; }
   @media (max-width: 900px) { .log-grid { grid-template-columns: 1fr; } }
@@ -400,6 +513,15 @@ if ($action === 'transmission') {
   .ln-warn { color: var(--amber); }
   .ln-err  { color: var(--red); }
   .ln-ok   { color: var(--green-dim); }
+
+  /* ── sección YSF display ── */
+  .ysf-display-section { margin-top: 2rem; }
+  .ysf-section-title {
+    font-family: var(--font-mono); font-size: .7rem; letter-spacing: .2em;
+    text-transform: uppercase; color: var(--violet); margin-bottom: 1rem;
+    display: flex; align-items: center; gap: .8rem;
+  }
+  .ysf-section-title::after { content: ''; flex: 1; height: 1px; background: linear-gradient(90deg, rgba(181,122,255,.4), transparent); }
 </style>
 </head>
 <body>
@@ -415,9 +537,9 @@ if ($action === 'transmission') {
 
   <!-- ── Status bar ── -->
   <div class="status-bar">
-    <div class="status-item"><div class="dot" id="dot-mosquitto"></div><span>Mosquittoxx</span></div>
-    <div class="status-item"><div class="dot" id="dot-gateway"></div><span>DMRGatewayxx</span></div>
-    <div class="status-item"><div class="dot" id="dot-mmdvm"></div><span>MMDVMHostxx</span></div>
+    <div class="status-item"><div class="dot" id="dot-mosquitto"></div><span>Mosquitto</span></div>
+    <div class="status-item"><div class="dot" id="dot-gateway"></div><span>DMRGateway</span></div>
+    <div class="status-item"><div class="dot" id="dot-mmdvm"></div><span>MMDVMHost</span></div>
     <div class="section-divider"></div>
     <div class="status-item"><div class="dot" id="dot-ysf"></div><span style="color:var(--violet)">YSFGateway</span></div>
     <div class="status-item"><div class="dot" id="dot-mmdvmysf"></div><span style="color:#26c6da">MMDVMHost YSF</span></div>
@@ -466,7 +588,7 @@ if ($action === 'transmission') {
 
   </div>
 
-  <!-- ══ Display row ══ -->
+  <!-- ══ DMR Display row ══ -->
   <div class="display-row">
     <div>
       <div class="panel-label">▸ DMR Display</div>
@@ -492,7 +614,7 @@ if ($action === 'transmission') {
     </div>
 
     <div>
-      <div class="panel-label">▸ Últimos escuchados</div>
+      <div class="panel-label">▸ Últimos escuchados DMR</div>
       <div class="lh-panel">
         <div class="lh-header">
           <span>Indicativo</span><span>Nombre</span><span>TG</span><span>Hora</span><span>Src</span>
@@ -504,7 +626,7 @@ if ($action === 'transmission') {
     </div>
   </div>
 
-  <!-- ── Logs ── -->
+  <!-- ── Logs DMR/YSF ── -->
   <div class="log-grid">
     <div class="log-panel">
       <div class="log-panel-header">
@@ -536,6 +658,51 @@ if ($action === 'transmission') {
     </div>
   </div>
 
+  <!-- ══ YSF Display + Últimos escuchados YSF ══ -->
+  <div class="ysf-display-section">
+    <div class="ysf-section-title">▸ C4FM · YSF Monitor</div>
+    <div class="display-row">
+
+      <!-- YSF Nextion display -->
+      <div>
+        <div class="panel-label ysf-label">▸ C4FM Display</div>
+        <div class="nextion-ysf">
+          <div class="nx-topbar ysf-bar">
+            <span class="nx-mode">C4FM · YSF</span>
+            <span style="color:#6a3a9a">EA3EIZ · ADER</span>
+            <span class="nx-dest" id="ysfDest">—</span>
+          </div>
+          <div class="nx-vu"       id="ysfVuLeft"></div>
+          <div class="nx-vu right" id="ysfVuRight"></div>
+          <div class="nx-center" id="ysfNxCenter">
+            <div class="nx-clock" id="ysfNxClock" style="color:#c084ff;">00:00:00</div>
+            <div class="nx-date"  id="ysfNxDate" style="color:#9b59d4;">—</div>
+          </div>
+          <div class="nx-txbar" id="ysfTxBar"></div>
+          <div class="nx-botbar ysf-bar">
+            <span style="color:#5a3a8a;font-family:var(--font-mono);font-size:.65rem;" id="ysfProto">YSF</span>
+            <span style="color:#5a3a8a;font-family:var(--font-mono);font-size:.65rem;">C4FM · DIGITAL VOICE</span>
+            <span class="nx-source" id="ysfSource"></span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Últimos 5 escuchados YSF -->
+      <div>
+        <div class="panel-label ysf-label">▸ Últimos escuchados C4FM</div>
+        <div class="lh-panel-ysf">
+          <div class="lh-header-ysf">
+            <span>Indicativo</span><span>Nombre</span><span>Hora</span><span>Src</span>
+          </div>
+          <div class="lh-body" id="ysfLhBody">
+            <div class="lh-empty">Sin actividad C4FM</div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
 </main>
 
 <script>
@@ -544,11 +711,15 @@ let txTimer         = null;
 let vuTimer         = null;
 let ysfTimer        = null;
 let mmdvmYsfTimer   = null;
+let ysfTxTimer      = null;
+let ysfVuTimer      = null;
 let running         = false;
 let ysfRunning      = false;
 let mmdvmYsfRunning = false;
-let currentlyActive = false;
+let currentlyActive    = false;
+let ysfCurrentlyActive = false;
 
+// ── VU builders ──────────────────────────────────────────────────────────────
 function buildVU(id) {
   const el = document.getElementById(id);
   for (let i = 0; i < 18; i++) {
@@ -557,24 +728,32 @@ function buildVU(id) {
   }
 }
 buildVU('vuLeft'); buildVU('vuRight');
+buildVU('ysfVuLeft'); buildVU('ysfVuRight');
 
-function animateVU(on) {
-  clearInterval(vuTimer);
-  ['vuLeft','vuRight'].forEach(id => {
+function animateVU(on, prefix, colorTop) {
+  clearInterval(prefix === 'ysf' ? ysfVuTimer : vuTimer);
+  const ids = prefix === 'ysf' ? ['ysfVuLeft','ysfVuRight'] : ['vuLeft','vuRight'];
+  ids.forEach(id => {
     for (let i = 0; i < 18; i++) document.getElementById(`${id}-${i}`).className = 'nx-vu-bar';
   });
   if (!on) return;
-  vuTimer = setInterval(() => {
-    ['vuLeft','vuRight'].forEach(id => {
+  const timer = setInterval(() => {
+    ids.forEach(id => {
       const lvl = Math.floor(Math.random() * 16) + 1;
       for (let i = 0; i < 18; i++) {
-        document.getElementById(`${id}-${i}`).className =
-          i < lvl ? (i < 10 ? 'nx-vu-bar lit-g' : i < 14 ? 'nx-vu-bar lit-a' : 'nx-vu-bar lit-r') : 'nx-vu-bar';
+        let cls = 'nx-vu-bar';
+        if (i < lvl) {
+          if (prefix === 'ysf') cls += i < 10 ? ' lit-v' : i < 14 ? ' lit-vd' : ' lit-r';
+          else                  cls += i < 10 ? ' lit-g'  : i < 14 ? ' lit-a'  : ' lit-r';
+        }
+        document.getElementById(`${id}-${i}`).className = cls;
       }
     });
   }, 80);
+  if (prefix === 'ysf') ysfVuTimer = timer; else vuTimer = timer;
 }
 
+// ── Clock ─────────────────────────────────────────────────────────────────────
 function updateClock() {
   const now  = new Date();
   const hms  = now.toLocaleTimeString('es-ES');
@@ -584,6 +763,10 @@ function updateClock() {
     const clk = document.getElementById('nxClock');
     if (clk) { clk.textContent = hms; document.getElementById('nxDate').textContent = date; }
   }
+  if (!ysfCurrentlyActive) {
+    const yClk = document.getElementById('ysfNxClock');
+    if (yClk) { yClk.textContent = hms; document.getElementById('ysfNxDate').textContent = date; }
+  }
 }
 setInterval(updateClock, 1000);
 updateClock();
@@ -592,8 +775,9 @@ function esc(s) {
   return String(s || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
 }
 
+// ── DMR display ───────────────────────────────────────────────────────────────
 function showIdle() {
-  currentlyActive = false; animateVU(false);
+  currentlyActive = false; animateVU(false, 'dmr');
   document.getElementById('nxTxBar').classList.remove('active');
   document.getElementById('nxTG').textContent    = '—';
   document.getElementById('nxSlot').textContent  = '—';
@@ -606,13 +790,13 @@ function showIdle() {
 }
 
 function showActive(d) {
-  currentlyActive = true; animateVU(true);
+  currentlyActive = true; animateVU(true, 'dmr');
   document.getElementById('nxTxBar').classList.add('active');
   document.getElementById('nxTG').textContent    = d.tg    ? 'TG ' + d.tg : '—';
   document.getElementById('nxSlot').textContent  = d.slot  || '—';
   document.getElementById('nxDmrid').textContent = d.dmrid || '—';
   const src = document.getElementById('nxSource');
-  if (d.source === 'RF')      { src.textContent = 'RF';  src.className = 'nx-source rf'; }
+  if (d.source === 'RF')           { src.textContent = 'RF';  src.className = 'nx-source rf'; }
   else if (d.source === 'NETWORK') { src.textContent = 'NET'; src.className = 'nx-source net'; }
   else { src.textContent = ''; src.className = 'nx-source'; }
   document.getElementById('nxCenter').innerHTML =
@@ -620,6 +804,34 @@ function showActive(d) {
     (d.name ? `<div class="nx-name">${esc(d.name)}</div>` : '');
 }
 
+// ── YSF display ───────────────────────────────────────────────────────────────
+function showYSFIdle() {
+  ysfCurrentlyActive = false; animateVU(false, 'ysf');
+  document.getElementById('ysfTxBar').className = 'nx-txbar';
+  document.getElementById('ysfDest').textContent = '—';
+  document.getElementById('ysfProto').textContent = 'YSF';
+  const src = document.getElementById('ysfSource');
+  src.textContent = ''; src.className = 'nx-source';
+  document.getElementById('ysfNxCenter').innerHTML =
+    '<div class="nx-clock" id="ysfNxClock" style="color:#c084ff;">00:00:00</div>' +
+    '<div class="nx-date" id="ysfNxDate" style="color:#9b59d4;">—</div>';
+  updateClock();
+}
+
+function showYSFActive(d) {
+  ysfCurrentlyActive = true; animateVU(true, 'ysf');
+  document.getElementById('ysfTxBar').className = 'nx-txbar active-ysf';
+  document.getElementById('ysfDest').textContent = d.dest ? d.dest : 'ALL';
+  const src = document.getElementById('ysfSource');
+  if (d.source === 'RF')           { src.textContent = 'RF';  src.className = 'nx-source rf'; }
+  else if (d.source === 'NETWORK') { src.textContent = 'NET'; src.className = 'nx-source net'; }
+  else { src.textContent = ''; src.className = 'nx-source'; }
+  document.getElementById('ysfNxCenter').innerHTML =
+    `<div class="nx-callsign ysf">${esc(d.callsign)}</div>` +
+    (d.name ? `<div class="nx-name ysf">${esc(d.name)}</div>` : '');
+}
+
+// ── DMR Last heard ────────────────────────────────────────────────────────────
 function renderLastHeard(list, activeCall) {
   const body = document.getElementById('lhBody');
   if (!list || list.length === 0) { body.innerHTML = '<div class="lh-empty">Sin actividad reciente</div>'; return; }
@@ -638,12 +850,40 @@ function renderLastHeard(list, activeCall) {
   }).join('');
 }
 
+// ── YSF Last heard ────────────────────────────────────────────────────────────
+function renderYSFLastHeard(list, activeCall) {
+  const body = document.getElementById('ysfLhBody');
+  if (!list || list.length === 0) { body.innerHTML = '<div class="lh-empty">Sin actividad C4FM</div>'; return; }
+  body.innerHTML = list.map(r => {
+    const isActive = activeCall && r.callsign === activeCall;
+    const srcCls = (r.source === 'RF') ? 'rf' : 'net';
+    const srcLbl = (r.source === 'RF') ? 'RF' : 'NET';
+    const dot = isActive ? '<span class="lh-tx-dot-ysf"></span>' : '';
+    return `<div class="lh-row-ysf${isActive ? ' lh-active' : ''}">
+      <div class="lh-call-wrap">${dot}<span class="lh-call-ysf">${esc(r.callsign)}</span></div>
+      <span class="lh-name">${esc(r.name || '—')}</span>
+      <span class="lh-time">${esc(r.time || '—')}</span>
+      <span class="lh-src-ysf ${srcCls}">${srcLbl}</span>
+    </div>`;
+  }).join('');
+}
+
+// ── Fetch transmissions ───────────────────────────────────────────────────────
 async function fetchTransmission() {
   try {
     const r = await fetch('?action=transmission');
     const d = await r.json();
     if (d.active) showActive(d); else showIdle();
     renderLastHeard(d.lastHeard || [], d.active ? d.callsign : null);
+  } catch(e) {}
+}
+
+async function fetchYSFTransmission() {
+  try {
+    const r = await fetch('?action=ysf-transmission');
+    const d = await r.json();
+    if (d.active) showYSFActive(d); else showYSFIdle();
+    renderYSFLastHeard(d.lastHeard || [], d.active ? d.callsign : null);
   } catch(e) {}
 }
 
@@ -661,7 +901,6 @@ async function checkStatus() {
   } catch(e) {}
 }
 
-// ── YSF status ────────────────────────────────────────────────────────────────
 async function checkYSFStatus() {
   try {
     const r = await fetch('?action=ysf-status');
@@ -672,7 +911,6 @@ async function checkYSFStatus() {
   } catch(e) {}
 }
 
-// ── MMDVMHost YSF status ──────────────────────────────────────────────────────
 async function checkMMDVMYSFStatus() {
   try {
     const r = await fetch('?action=mmdvmysf-status');
@@ -693,7 +931,6 @@ function updateDMRButton(on) {
   document.getElementById('btnLabel').textContent = on ? 'Cerrar MMDVM Host' : 'Abrir MMDVM Host';
 }
 
-// Estado combinado del botón YSF = cualquiera de los dos activo
 function refreshYSFButton() {
   const combinedOn = ysfRunning || mmdvmYsfRunning;
   const btn = document.getElementById('btnYSF');
@@ -702,7 +939,7 @@ function refreshYSFButton() {
   document.getElementById('ysfRefreshBadge').style.display = combinedOn ? 'flex' : 'none';
 }
 
-// ── DMR toggle (independiente — no toca YSF) ─────────────────────────────────
+// ── Toggles ───────────────────────────────────────────────────────────────────
 async function toggleServices() {
   const btn = document.getElementById('btnToggle');
   const wasOpen = running;
@@ -721,7 +958,6 @@ async function toggleServices() {
   } finally { btn.classList.remove('busy'); }
 }
 
-// ── YSF toggle (independiente — no toca DMR mmdvmhost) ───────────────────────
 async function toggleYSF() {
   const btn = document.getElementById('btnYSF');
   const wasOpen = ysfRunning || mmdvmYsfRunning;
@@ -729,15 +965,15 @@ async function toggleYSF() {
   document.getElementById('btnYSFLabel').textContent = wasOpen ? 'Deteniendo…' : 'Iniciando…';
   try {
     if (wasOpen) {
-      // Cerrar: YSFGateway → MMDVMHost YSF
       await fetch('?action=ysf-stop');
       await new Promise(r => setTimeout(r, 1000));
       await fetch('?action=mmdvmysf-stop');
       await new Promise(r => setTimeout(r, 2000));
       clearLog('logYsf'); clearLog('logMmdvmYsf');
       stopYSFLogs(); stopMMDVMYSFLogs();
+      showYSFIdle();
+      document.getElementById('ysfLhBody').innerHTML = '<div class="lh-empty">Sin actividad C4FM</div>';
     } else {
-      // Abrir: MMDVMHost YSF → YSFGateway
       await fetch('?action=mmdvmysf-start');
       await new Promise(r => setTimeout(r, 2000));
       await fetch('?action=ysf-start');
@@ -749,7 +985,6 @@ async function toggleYSF() {
   } finally { btn.classList.remove('busy'); }
 }
 
-// ── Reboot ────────────────────────────────────────────────────────────────────
 async function rebootPi() {
   if (!confirm('¿Seguro que quieres reiniciar la Raspberry Pi?')) return;
   const btn = document.getElementById('btnReboot');
@@ -758,7 +993,7 @@ async function rebootPi() {
   await fetch('?action=reboot');
 }
 
-// ── logs ──────────────────────────────────────────────────────────────────────
+// ── Logs ──────────────────────────────────────────────────────────────────────
 function colorize(text) {
   return text.split('\n').map(l => {
     const ll = l.toLowerCase();
@@ -822,7 +1057,10 @@ function stopYSFLogs()       { clearInterval(ysfTimer);      ysfTimer      = nul
 function startMMDVMYSFLogs() { fetchMMDVMYSFLogs(); mmdvmYsfTimer = setInterval(fetchMMDVMYSFLogs, 4000); }
 function stopMMDVMYSFLogs()  { clearInterval(mmdvmYsfTimer); mmdvmYsfTimer = null; }
 
-// ── init ──────────────────────────────────────────────────────────────────────
+function startYSFTransmissionPoll() { fetchYSFTransmission(); ysfTxTimer = setInterval(fetchYSFTransmission, 4000); }
+function stopYSFTransmissionPoll()  { clearInterval(ysfTxTimer); ysfTxTimer = null; }
+
+// ── Init ──────────────────────────────────────────────────────────────────────
 (async () => {
   await checkStatus();
   await checkYSFStatus();
@@ -832,8 +1070,10 @@ function stopMMDVMYSFLogs()  { clearInterval(mmdvmYsfTimer); mmdvmYsfTimer = nul
   setInterval(checkMMDVMYSFStatus, 8000);
   if (running) startRefresh();
   else { showIdle(); fetchTransmission(); }
+  showYSFIdle();
   startYSFLogs();
   startMMDVMYSFLogs();
+  startYSFTransmissionPoll();
 })();
 </script>
 </body>
