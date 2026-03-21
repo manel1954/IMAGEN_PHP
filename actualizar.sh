@@ -1,12 +1,11 @@
 ﻿#!/bin/bash
 
-
-
 # path usuario
-usuario="/home/pi/"
-nombre_imagen="PHP"
+usuario="/home/pi"
+usuario="$usuario"
+fecha_imagen="21-01-26"
+nombre_imagen="PHP-"
 version=$nombre_imagen$fecha_imagen
-
 
 #pone todos los datos de DMR+ , Brandameiter, svxlink etc en panel_control.ini     
 bm=`sed -n '2p'  $usuario/MMDVMHost/MMDVMBM.ini`
