@@ -5,6 +5,8 @@ cd Display-Driver
 make
 sudo make install
 
+echo "Instalando Display Driver para Nextion"
+sleep 5
 sudo chmod 777 -R ~/Display-Driver
 
 
