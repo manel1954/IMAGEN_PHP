@@ -1,14 +1,12 @@
 #!/bin/bash
 cd /home/pi
 git clone https://github.com/g4klx/Display-Driver.git
-echo "Instalando Display Driver para Nextion"
-read a -n 1 -s -r -p "Presione cualquier tecla para continuar con la instalación del Display Driver para Nextion"
+sleep 2
 cd Display-Driver
 make
 sudo make install
 
 sudo chmod 777 -R ~/Display-Driver
-
 
 sudo apt-get install -y php-zip
 sudo systemctl restart apache2
@@ -33,6 +31,8 @@ EOF
 sudo systemctl daemon-reload
 sudo systemctl enable displaydriver.service
 sudo systemctl start displaydriver.service
+
+clear
 
 #grep -q "www-data ALL=(ALL) NOPASSWD: /bin/systemctl restart displaydriver.service" /etc/sudoers || echo "www-data ALL=(ALL) NOPASSWD: /bin/systemctl restart displaydriver.service" | sudo EDITOR='tee -a' visudo
 
