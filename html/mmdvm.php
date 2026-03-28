@@ -119,6 +119,7 @@ if ($action === 'backup-configs') {
         '/home/pi/MMDVMHost/MMDVMHost.ini',
         '/home/pi/Display-Driver/DisplayDriver.ini',
         '/home/pi/YSFClients/YSFGateway/YSFGateway.ini',
+        '/home/pi/DMRGateway/DMRGateway.ini',
     ];
     $fileList = implode(' ', array_map('escapeshellarg', $files));
     shell_exec("zip -j " . escapeshellarg($zipPath) . " {$fileList} 2>/dev/null");
@@ -149,6 +150,7 @@ if ($action === 'restore-configs') {
         'MMDVMHost.ini'     => '/home/pi/MMDVMHost/MMDVMHost.ini',
         'DisplayDriver.ini' => '/home/pi/Display-Driver/DisplayDriver.ini',
         'YSFGateway.ini'    => '/home/pi/YSFClients/YSFGateway/YSFGateway.ini',
+        'DMRGateway.ini'    => '/home/pi/DMRGateway/DMRGateway.ini',
     ];
     $zip = new ZipArchive();
     if ($zip->open($tmpZip) !== true) {
