@@ -10,7 +10,7 @@ sudo chmod 777 -R ~/Display-Driver
 
 sudo apt-get install -y php-zip
 sudo systemctl restart apache2
-sudo nano /etc/php/8.2/apache2/php.ini
+#sudo nano /etc/php/8.2/apache2/php.ini
 
 sudo cat > /etc/systemd/system/displaydriver.service <<- "EOF"
 [Unit]
