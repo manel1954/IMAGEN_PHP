@@ -537,7 +537,7 @@ if ($action === 'ysf-transmission') {
           text-decoration:none;transition:background .2s,color .2s;"
    onmouseover="this.style.background='rgba(0,212,255,.1)'"
    onmouseout="this.style.background='transparent'">
-  📄 Config Display Driver
+  📄 Config Display-Driver
 </a>
 <button id="btnReboot" class="btn-reboot" onclick="rebootPi()">⏻ Reiniciar Pi</button>
 </header>
