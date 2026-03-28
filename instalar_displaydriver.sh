@@ -6,17 +6,17 @@ BLANCO="\033[1;37m"
 AMARILLO="\033[1;33m"
 CIAN="\033[1;36m"
 GRIS="\033[0m"
-MARRON="\33[38;5;138m"                       
+MARRON="\033[38;5;138m"                       
                         
 if [ -d "/home/pi/Display-Driver" ]; then
-echo "${VERDE}"
-echo "********************************************************"
-echo "         El Display-Driver ya ha sido instalado."
-echo "********************************************************"
-echo "${AMARILLO}"    
-echo "PULSA ENTER PARA CONTINUAR"
-read a
-clear
+    echo -e "${VERDE}"
+    echo -e "********************************************************"
+    echo -e "         El Display-Driver ya ha sido instalado."
+    echo -e "********************************************************"
+    echo -e "${AMARILLO}"
+    echo -e "PULSA ENTER PARA CONTINUAR"
+    read a
+    clear
 else
 
 cd /home/pi
