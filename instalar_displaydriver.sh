@@ -1,6 +1,7 @@
 #!/bin/bash
 
 git clone https://github.com/g4klx/Display-Driver.git
+sleep 10
 cd Display-Driver
 make
 sudo make install
