@@ -2,11 +2,14 @@
 
 if [ -d "~/Display-Driver" ]; then
     echo "El Display-Driver ya está instalado."
+    echo "PULSA ENTER PARA CONTINUAR"
+    read a
+    clear
 else
 
 cd /home/pi
 git clone https://github.com/g4klx/Display-Driver.git
-fi
+
 
 sleep 2
 cd Display-Driver
@@ -40,6 +43,6 @@ sudo systemctl enable displaydriver.service
 sudo systemctl start displaydriver.service
 
 clear
-
+fi
 #grep -q "www-data ALL=(ALL) NOPASSWD: /bin/systemctl restart displaydriver.service" /etc/sudoers || echo "www-data ALL=(ALL) NOPASSWD: /bin/systemctl restart displaydriver.service" | sudo EDITOR='tee -a' visudo
 
