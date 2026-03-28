@@ -1,6 +1,13 @@
 #!/bin/bash
+
+if [ -d "~/Display-Driver" ]; then
+    echo "El Display-Driver ya está instalado."
+else
+
 cd /home/pi
 git clone https://github.com/g4klx/Display-Driver.git
+fi
+
 sleep 2
 cd Display-Driver
 make
