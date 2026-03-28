@@ -1,6 +1,6 @@
 #!/bin/bash
 
-if [ -d "~/Display-Driver" ]; then
+if [ -d "/home/pi/Display-Driver" ]; then
     echo "El Display-Driver ya está instalado."
     echo "PULSA ENTER PARA CONTINUAR"
     read a
@@ -16,7 +16,7 @@ cd Display-Driver
 make
 sudo make install
 
-sudo chmod 777 -R ~/Display-Driver
+sudo chmod 777 -R /home/pi/Display-Driver
 
 sudo apt-get install -y php-zip
 sudo systemctl restart apache2
