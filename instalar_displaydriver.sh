@@ -1,5 +1,5 @@
 #!/bin/bash
-
+cd /home/pi
 git clone https://github.com/g4klx/Display-Driver.git
 echo "Instalando Display Driver para Nextion"
 read a -n 1 -s -r -p "Presione cualquier tecla para continuar con la instalación del Display Driver para Nextion"
