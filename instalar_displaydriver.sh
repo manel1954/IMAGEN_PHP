@@ -1,13 +1,12 @@
 #!/bin/bash
 
 git clone https://github.com/g4klx/Display-Driver.git
+echo "Instalando Display Driver para Nextion"
 read a -n 1 -s -r -p "Presione cualquier tecla para continuar con la instalación del Display Driver para Nextion"
 cd Display-Driver
 make
 sudo make install
 
-echo "Instalando Display Driver para Nextion"
-sleep 5
 sudo chmod 777 -R ~/Display-Driver
 
 
