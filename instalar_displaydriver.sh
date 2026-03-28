@@ -1,7 +1,7 @@
 #!/bin/bash
 
 if [ -d "/home/pi/Display-Driver" ]; then
-    echo "El Display-Driver ya está instalado."
+    echo "El Display-Driver ya ha sido instalado."
     echo "PULSA ENTER PARA CONTINUAR"
     read a
     clear
