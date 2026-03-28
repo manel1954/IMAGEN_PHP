@@ -530,7 +530,16 @@ if ($action === 'ysf-transmission') {
   <img src="Logo_ea3eiz.png" alt="EA3EIZ" style="height:40px; width:auto;">
   <h1>MMDVM &amp; YSF Control</h1>
   <span class="uptime" id="clock">--:--:--</span>
-  <button id="btnReboot" class="btn-reboot" onclick="rebootPi()">⏻ Reiniciar Pi</button>
+ <a href="edit_ini.php?file=displaydriver" target="_blank"
+   style="font-family:var(--font-mono);font-size:.75rem;letter-spacing:.08em;
+          text-transform:uppercase;background:transparent;color:var(--cyan);
+          border:1px solid var(--cyan);border-radius:4px;padding:.35rem .9rem;
+          text-decoration:none;transition:background .2s,color .2s;"
+   onmouseover="this.style.background='rgba(0,212,255,.1)'"
+   onmouseout="this.style.background='transparent'">
+  📄 Config Display Driver
+</a>
+<button id="btnReboot" class="btn-reboot" onclick="rebootPi()">⏻ Reiniciar Pi</button>
 </header>
 
 <main class="ctrl-body">

@@ -7,6 +7,7 @@ $files = [
     'dmrgateway' => '/home/pi/DMRGateway/DMRGateway.ini',
     'mmdvmysf'   => '/home/pi/MMDVMHost/MMDVMYSF.ini',
     'ysfgateway' => '/home/pi/YSFClients/YSFGateway/YSFGateway.ini',
+    'displaydriver' => '/home/pi/Display-Driver/DisplayDriver.ini',
 ];
 
 $key  = $_GET['file'] ?? '';
