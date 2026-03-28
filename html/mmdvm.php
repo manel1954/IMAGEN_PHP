@@ -103,6 +103,14 @@ if ($action === 'reboot') {
     exit;
 }
 
+// ── Display Driver restart ────────────────────────────────────────────────────
+if ($action === 'display-restart') {
+    shell_exec('sudo systemctl restart displaydriver.service 2>/dev/null');
+    header('Content-Type: application/json');
+    echo json_encode(['ok' => true]);
+    exit;
+}
+
 // ── logs ─────────────────────────────────────────────────────────────────────
 if ($action === 'logs') {
     $lines = intval($_GET['lines'] ?? 15);
@@ -188,12 +196,9 @@ if ($action === 'transmission') {
 
 // ── YSF Transmission ─────────────────────────────────────────────────────────
 if ($action === 'ysf-transmission') {
-    // Intenta mmdvmysf primero, luego ysfgateway
     $log = shell_exec("sudo journalctl -u mmdvmysf -n 300 --no-pager --output=short 2>/dev/null");
-    $src_service = 'mmdvmysf';
     if (empty(trim($log))) {
         $log = shell_exec("sudo journalctl -u ysfgateway -n 300 --no-pager --output=short 2>/dev/null");
-        $src_service = 'ysfgateway';
     }
     $lines = array_reverse(explode("\n", $log));
 
@@ -202,27 +207,15 @@ if ($action === 'ysf-transmission') {
     foreach ($lines as $line) {
         if (preg_match('/YSF.*(end of|lost RF|watchdog)/i', $line)) { $active = false; break; }
         if (preg_match('/(\d{2}:\d{2}:\d{2}).*YSF.*received (RF|network) voice.*from\s+(\S+)/i', $line, $m)) {
-            $active   = true;
-            $source   = strtoupper($m[2]);
-            $callsign = strtoupper(trim($m[3]));
-            break;
+            $active = true; $source = strtoupper($m[2]); $callsign = strtoupper(trim($m[3])); break;
         }
-        // Patrón alternativo para algunas versiones de MMDVMHost YSF
         if (preg_match('/(\d{2}:\d{2}:\d{2}).*YSF.*from\s+(\S+)\s+to\s+(\S+)/i', $line, $m)) {
-            $active   = true;
-            $source   = 'RF';
-            $callsign = strtoupper(trim($m[2]));
-            $dest     = trim($m[3]);
-            break;
+            $active = true; $source = 'RF'; $callsign = strtoupper(trim($m[2])); $dest = trim($m[3]); break;
         }
     }
 
-    if ($callsign) {
-        $info = lookupCall($callsign);
-        $name = $info['name'];
-    }
+    if ($callsign) { $info = lookupCall($callsign); $name = $info['name']; }
 
-    // Últimos 5 escuchados
     $lastHeard = []; $seen = [];
     foreach ($lines as $line) {
         $cs = ''; $src = ''; $time = ''; $dst = '';
@@ -233,13 +226,7 @@ if ($action === 'ysf-transmission') {
         }
         if ($cs && !in_array($cs, $seen)) {
             $inf = lookupCall($cs);
-            $lastHeard[] = [
-                'callsign' => $cs,
-                'name'     => $inf['name'],
-                'dest'     => $dst,
-                'source'   => $src,
-                'time'     => $time,
-            ];
+            $lastHeard[] = ['callsign'=>$cs,'name'=>$inf['name'],'dest'=>$dst,'source'=>$src,'time'=>$time];
             $seen[] = $cs;
             if (count($lastHeard) >= 5) break;
         }
@@ -282,22 +269,28 @@ if ($action === 'ysf-transmission') {
   /* ── header ── */
   .ctrl-header {
     border-bottom: 1px solid var(--border);
-    padding: 1.2rem 2rem; display: flex; align-items: center; gap: 1rem;
-    background: var(--surface);
+    padding: 1.2rem 2rem; display: flex; align-items: center; gap: .8rem;
+    background: var(--surface); flex-wrap: wrap;
   }
   .ctrl-header h1 {
     font-family: var(--font-ui); font-weight: 700; font-size: 1.5rem;
     letter-spacing: .08em; color: #e2eaf5; margin: 0; text-transform: uppercase;
   }
   .ctrl-header .uptime { margin-left: auto; font-family: var(--font-mono); font-size: .8rem; color: var(--text-dim); }
-  .btn-reboot {
-    font-family: var(--font-mono); font-size: .75rem; letter-spacing: .1em;
-    text-transform: uppercase; background: transparent; color: var(--red);
-    border: 1px solid var(--red); border-radius: 4px;
-    padding: .35rem .9rem; cursor: pointer; transition: background .2s, color .2s;
+
+  .btn-header {
+    font-family: var(--font-mono); font-size: .75rem; letter-spacing: .08em;
+    text-transform: uppercase; background: transparent;
+    border-radius: 4px; padding: .35rem .9rem; cursor: pointer;
+    transition: background .2s; text-decoration: none; display: inline-block;
   }
-  .btn-reboot:hover { background: rgba(255,69,96,.15); }
-  .btn-reboot:disabled { opacity: .5; pointer-events: none; }
+  .btn-header.cyan  { color: var(--cyan);  border: 1px solid var(--cyan); }
+  .btn-header.cyan:hover  { background: rgba(0,212,255,.1); }
+  .btn-header.green { color: var(--green); border: 1px solid var(--green); }
+  .btn-header.green:hover { background: rgba(0,255,159,.1); }
+  .btn-header.red   { color: var(--red);   border: 1px solid var(--red); }
+  .btn-header.red:hover   { background: rgba(255,69,96,.15); }
+  .btn-header:disabled { opacity: .5; pointer-events: none; }
 
   .ctrl-body { padding: 2rem; max-width: 1400px; margin: 0 auto; }
 
@@ -308,20 +301,17 @@ if ($action === 'ysf-transmission') {
   .dot.active { background: var(--green); box-shadow: 0 0 8px var(--green); animation: pulse 2s infinite; }
   .dot.error  { background: var(--red); box-shadow: 0 0 8px var(--red); }
   @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.4} }
-
   .section-divider { width: 1px; height: 20px; background: var(--border); margin: 0 .5rem; }
 
-  /* ══ CONTROLS SECTION ══ */
+  /* ══ CONTROLS ══ */
   .controls-section { display: grid; grid-template-columns: 1fr 1fr; gap: 1.2rem; margin-bottom: 2rem; }
   @media (max-width: 800px) { .controls-section { grid-template-columns: 1fr; } }
-
   .service-card { background: var(--surface); border: 1px solid var(--border); border-radius: 6px; padding: 1.2rem 1.4rem; }
   .service-card-label { font-family: var(--font-mono); font-size: .7rem; letter-spacing: .15em; text-transform: uppercase; margin-bottom: .8rem; }
   .service-card-label.dmr { color: var(--amber); }
   .service-card-label.ysf { color: var(--violet); }
   .service-card-btns { display: flex; gap: .6rem; flex-wrap: nowrap; margin-top: .8rem; }
 
-  /* ── buttons ── */
   .btn-mmdvm {
     font-family: var(--font-ui); font-weight: 700; font-size: 1rem;
     letter-spacing: .12em; text-transform: uppercase; padding: .75rem 2rem;
@@ -348,7 +338,6 @@ if ($action === 'ysf-transmission') {
   .auto-badge .dot-sm { width: 6px; height: 6px; border-radius: 50%; background: var(--green); animation: pulse 2s infinite; }
   .auto-badge.ysf .dot-sm { background: var(--violet); }
 
-  /* ── ini buttons ── */
   .ini-btn {
     font-family: var(--font-mono); font-size: .72rem; text-transform: uppercase;
     letter-spacing: .06em; padding: .3rem .7rem; border-radius: 3px;
@@ -371,7 +360,6 @@ if ($action === 'ysf-transmission') {
   .panel-label { font-family: var(--font-mono); font-size: .7rem; letter-spacing: .15em; color: var(--amber); text-transform: uppercase; margin-bottom: .5rem; }
   .panel-label.ysf-label { color: var(--violet); }
 
-  /* ── Nextion DMR ── */
   .nextion {
     background: #060c10; border: 2px solid #1a3a4a; border-radius: 6px;
     box-shadow: 0 0 0 1px #0d2030, inset 0 0 40px rgba(0,212,255,.04), 0 0 30px rgba(0,212,255,.08);
@@ -382,7 +370,6 @@ if ($action === 'ysf-transmission') {
   .nextion::before { top: .5rem; left: .7rem; }
   .nextion::after  { bottom: .5rem; right: .7rem; }
 
-  /* ── Nextion YSF (tema violeta) ── */
   .nextion-ysf {
     background: #08060e; border: 2px solid #2d1a4a; border-radius: 6px;
     box-shadow: 0 0 0 1px #1a0d30, inset 0 0 40px rgba(181,122,255,.04), 0 0 30px rgba(181,122,255,.1);
@@ -393,16 +380,13 @@ if ($action === 'ysf-transmission') {
   .nextion-ysf::before { top: .5rem; left: .7rem; }
   .nextion-ysf::after  { bottom: .5rem; right: .7rem; }
 
-  /* Barras superiores/inferiores compartidas */
   .nx-topbar {
     position: absolute; top: 0; left: 0; right: 0; height: 30px;
     background: #1c1c24; border-bottom: 1px solid #1a3a4a;
     display: flex; align-items: center; justify-content: space-between;
     padding: 0 1rem; font-family: var(--font-mono); font-size: .65rem; color: #2a5a7a; letter-spacing: .1em;
   }
-  .nx-topbar.ysf-bar {
-    background: #1a1424; border-bottom: 1px solid #2d1a4a; color: #4a2a7a;
-  }
+  .nx-topbar.ysf-bar { background: #1a1424; border-bottom: 1px solid #2d1a4a; color: #4a2a7a; }
   .nx-topbar .nx-mode { color: var(--cyan); opacity: .7; }
   .nx-topbar.ysf-bar .nx-mode { color: var(--violet); opacity: .8; }
   .nx-topbar .nx-tg   { color: var(--amber); opacity: .85; min-width: 5rem; text-align: right; }
@@ -414,15 +398,12 @@ if ($action === 'ysf-transmission') {
     display: flex; align-items: center; justify-content: space-between;
     padding: 0 1rem; font-family: var(--font-mono); font-size: .65rem; color: #2a5a7a; letter-spacing: .08em;
   }
-  .nx-botbar.ysf-bar {
-    background: #110d1e; border-top: 1px solid #2d1a4a; color: #4a2a7a;
-  }
+  .nx-botbar.ysf-bar { background: #110d1e; border-top: 1px solid #2d1a4a; color: #4a2a7a; }
   .nx-botbar .nx-dmrid { color: #3a6a8a; min-width: 6rem; }
   .nx-botbar .nx-source { padding: .1rem .45rem; border-radius: 2px; font-size: .6rem; letter-spacing: .1em; }
   .nx-botbar .nx-source.rf  { background: rgba(0,255,159,.15); color: var(--green); border: 1px solid rgba(0,255,159,.3); }
   .nx-botbar .nx-source.net { background: rgba(0,212,255,.15); color: var(--cyan);  border: 1px solid rgba(0,212,255,.3); }
 
-  /* VU meters */
   .nx-vu { position: absolute; left: 1rem; top: 38px; bottom: 32px; width: 6px; display: flex; flex-direction: column-reverse; gap: 2px; }
   .nx-vu.right { left: auto; right: 1rem; }
   .nx-vu-bar { height: 5px; border-radius: 1px; background: #0d2030; transition: background .08s; }
@@ -452,7 +433,7 @@ if ($action === 'ysf-transmission') {
   .nx-name.ysf { color: #d4a8ff; }
   @keyframes glow-in { from{opacity:0;transform:scale(.96)} to{opacity:1;transform:scale(1)} }
 
-  /* ══ LAST HEARD (DMR) ══ */
+  /* ══ LAST HEARD DMR ══ */
   .lh-panel { background: var(--surface); border: 3px solid #1a3a4a; border-radius: 6px; display: flex; flex-direction: column; }
   .lh-header {
     background: #1c1c24; border-bottom: 1px solid var(--border); padding: .4rem 1rem;
@@ -514,7 +495,6 @@ if ($action === 'ysf-transmission') {
   .ln-err  { color: var(--red); }
   .ln-ok   { color: var(--green-dim); }
 
-  /* ── sección YSF display ── */
   .ysf-display-section { margin-top: 2rem; }
   .ysf-section-title {
     font-family: var(--font-mono); font-size: .7rem; letter-spacing: .2em;
@@ -530,21 +510,17 @@ if ($action === 'ysf-transmission') {
   <img src="Logo_ea3eiz.png" alt="EA3EIZ" style="height:40px; width:auto;">
   <h1>MMDVM &amp; YSF Control</h1>
   <span class="uptime" id="clock">--:--:--</span>
- <a href="edit_ini.php?file=displaydriver" target="_blank"
-   style="font-family:var(--font-mono);font-size:.75rem;letter-spacing:.08em;
-          text-transform:uppercase;background:transparent;color:var(--cyan);
-          border:1px solid var(--cyan);border-radius:4px;padding:.35rem .9rem;
-          text-decoration:none;transition:background .2s,color .2s;"
-   onmouseover="this.style.background='rgba(0,212,255,.1)'"
-   onmouseout="this.style.background='transparent'">
-  📄 Config Display-Driver
-</a>
-<button id="btnReboot" class="btn-reboot" onclick="rebootPi()">⏻ Reiniciar Pi</button>
+  <a href="edit_ini.php?file=displaydriver" target="_blank" class="btn-header cyan">
+    📄 Config Display-Driver
+  </a>
+  <button onclick="activarDisplay()" class="btn-header green">
+    ▶ Activar Display Driver
+  </button>
+  <button id="btnReboot" class="btn-header red" onclick="rebootPi()">⏻ Reiniciar Pi</button>
 </header>
 
 <main class="ctrl-body">
 
-  <!-- ── Status bar ── -->
   <div class="status-bar">
     <div class="status-item"><div class="dot" id="dot-mosquitto"></div><span>Mosquitto</span></div>
     <div class="status-item"><div class="dot" id="dot-gateway"></div><span>DMRGateway</span></div>
@@ -554,7 +530,6 @@ if ($action === 'ysf-transmission') {
     <div class="status-item"><div class="dot" id="dot-mmdvmysf"></div><span style="color:#26c6da">MMDVMHost YSF</span></div>
   </div>
 
-  <!-- ══ Controls section ══ -->
   <div class="controls-section">
 
     <!-- DMR card -->
@@ -597,7 +572,7 @@ if ($action === 'ysf-transmission') {
 
   </div>
 
-  <!-- ══ DMR Display row ══ -->
+  <!-- DMR Display row -->
   <div class="display-row">
     <div>
       <div class="panel-label">▸ DMR Display</div>
@@ -621,21 +596,18 @@ if ($action === 'ysf-transmission') {
         </div>
       </div>
     </div>
-
     <div>
       <div class="panel-label">▸ Últimos escuchados DMR</div>
       <div class="lh-panel">
         <div class="lh-header">
           <span>Indicativo</span><span>Nombre</span><span>TG</span><span>Hora</span><span>Src</span>
         </div>
-        <div class="lh-body" id="lhBody">
-          <div class="lh-empty">Sin actividad reciente</div>
-        </div>
+        <div class="lh-body" id="lhBody"><div class="lh-empty">Sin actividad reciente</div></div>
       </div>
     </div>
   </div>
 
-  <!-- ── Logs DMR/YSF ── -->
+  <!-- Logs DMR/YSF -->
   <div class="log-grid">
     <div class="log-panel">
       <div class="log-panel-header">
@@ -667,12 +639,10 @@ if ($action === 'ysf-transmission') {
     </div>
   </div>
 
-  <!-- ══ YSF Display + Últimos escuchados YSF ══ -->
+  <!-- YSF Display -->
   <div class="ysf-display-section">
     <div class="ysf-section-title">▸ C4FM · YSF Monitor</div>
     <div class="display-row">
-
-      <!-- YSF Nextion display -->
       <div>
         <div class="panel-label ysf-label">▸ C4FM Display</div>
         <div class="nextion-ysf">
@@ -685,7 +655,7 @@ if ($action === 'ysf-transmission') {
           <div class="nx-vu right" id="ysfVuRight"></div>
           <div class="nx-center" id="ysfNxCenter">
             <div class="nx-clock" id="ysfNxClock" style="color:#c084ff;">00:00:00</div>
-            <div class="nx-date"  id="ysfNxDate" style="color:#9b59d4;">—</div>
+            <div class="nx-date"  id="ysfNxDate"  style="color:#9b59d4;">—</div>
           </div>
           <div class="nx-txbar" id="ysfTxBar"></div>
           <div class="nx-botbar ysf-bar">
@@ -695,20 +665,15 @@ if ($action === 'ysf-transmission') {
           </div>
         </div>
       </div>
-
-      <!-- Últimos 5 escuchados YSF -->
       <div>
         <div class="panel-label ysf-label">▸ Últimos escuchados C4FM</div>
         <div class="lh-panel-ysf">
           <div class="lh-header-ysf">
             <span>Indicativo</span><span>Nombre</span><span>Hora</span><span>Src</span>
           </div>
-          <div class="lh-body" id="ysfLhBody">
-            <div class="lh-empty">Sin actividad C4FM</div>
-          </div>
+          <div class="lh-body" id="ysfLhBody"><div class="lh-empty">Sin actividad C4FM</div></div>
         </div>
       </div>
-
     </div>
   </div>
 
@@ -728,7 +693,6 @@ let mmdvmYsfRunning = false;
 let currentlyActive    = false;
 let ysfCurrentlyActive = false;
 
-// ── VU builders ──────────────────────────────────────────────────────────────
 function buildVU(id) {
   const el = document.getElementById(id);
   for (let i = 0; i < 18; i++) {
@@ -739,7 +703,7 @@ function buildVU(id) {
 buildVU('vuLeft'); buildVU('vuRight');
 buildVU('ysfVuLeft'); buildVU('ysfVuRight');
 
-function animateVU(on, prefix, colorTop) {
+function animateVU(on, prefix) {
   clearInterval(prefix === 'ysf' ? ysfVuTimer : vuTimer);
   const ids = prefix === 'ysf' ? ['ysfVuLeft','ysfVuRight'] : ['vuLeft','vuRight'];
   ids.forEach(id => {
@@ -762,7 +726,6 @@ function animateVU(on, prefix, colorTop) {
   if (prefix === 'ysf') ysfVuTimer = timer; else vuTimer = timer;
 }
 
-// ── Clock ─────────────────────────────────────────────────────────────────────
 function updateClock() {
   const now  = new Date();
   const hms  = now.toLocaleTimeString('es-ES');
@@ -784,7 +747,6 @@ function esc(s) {
   return String(s || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
 }
 
-// ── DMR display ───────────────────────────────────────────────────────────────
 function showIdle() {
   currentlyActive = false; animateVU(false, 'dmr');
   document.getElementById('nxTxBar').classList.remove('active');
@@ -813,7 +775,6 @@ function showActive(d) {
     (d.name ? `<div class="nx-name">${esc(d.name)}</div>` : '');
 }
 
-// ── YSF display ───────────────────────────────────────────────────────────────
 function showYSFIdle() {
   ysfCurrentlyActive = false; animateVU(false, 'ysf');
   document.getElementById('ysfTxBar').className = 'nx-txbar';
@@ -840,7 +801,6 @@ function showYSFActive(d) {
     (d.name ? `<div class="nx-name ysf">${esc(d.name)}</div>` : '');
 }
 
-// ── DMR Last heard ────────────────────────────────────────────────────────────
 function renderLastHeard(list, activeCall) {
   const body = document.getElementById('lhBody');
   if (!list || list.length === 0) { body.innerHTML = '<div class="lh-empty">Sin actividad reciente</div>'; return; }
@@ -859,7 +819,6 @@ function renderLastHeard(list, activeCall) {
   }).join('');
 }
 
-// ── YSF Last heard ────────────────────────────────────────────────────────────
 function renderYSFLastHeard(list, activeCall) {
   const body = document.getElementById('ysfLhBody');
   if (!list || list.length === 0) { body.innerHTML = '<div class="lh-empty">Sin actividad C4FM</div>'; return; }
@@ -877,7 +836,6 @@ function renderYSFLastHeard(list, activeCall) {
   }).join('');
 }
 
-// ── Fetch transmissions ───────────────────────────────────────────────────────
 async function fetchTransmission() {
   try {
     const r = await fetch('?action=transmission');
@@ -896,7 +854,6 @@ async function fetchYSFTransmission() {
   } catch(e) { showYSFIdle(); }
 }
 
-// ── DMR status ────────────────────────────────────────────────────────────────
 async function checkStatus() {
   try {
     const r = await fetch('?action=status');
@@ -948,7 +905,6 @@ function refreshYSFButton() {
   document.getElementById('ysfRefreshBadge').style.display = combinedOn ? 'flex' : 'none';
 }
 
-// ── Toggles ───────────────────────────────────────────────────────────────────
 async function toggleServices() {
   const btn = document.getElementById('btnToggle');
   const wasOpen = running;
@@ -1002,7 +958,11 @@ async function rebootPi() {
   await fetch('?action=reboot');
 }
 
-// ── Logs ──────────────────────────────────────────────────────────────────────
+async function activarDisplay() {
+  if (!confirm('¿Activar el servicio Display Driver?')) return;
+  await fetch('?action=display-restart');
+  alert('✔ Display Driver activado correctamente.');
+}
 function colorize(text) {
   return text.split('\n').map(l => {
     const ll = l.toLowerCase();
@@ -1065,11 +1025,9 @@ function startYSFLogs()      { fetchYSFLogs();      ysfTimer      = setInterval(
 function stopYSFLogs()       { clearInterval(ysfTimer);      ysfTimer      = null; }
 function startMMDVMYSFLogs() { fetchMMDVMYSFLogs(); mmdvmYsfTimer = setInterval(fetchMMDVMYSFLogs, 4000); }
 function stopMMDVMYSFLogs()  { clearInterval(mmdvmYsfTimer); mmdvmYsfTimer = null; }
-
 function startYSFTransmissionPoll() { fetchYSFTransmission(); ysfTxTimer = setInterval(fetchYSFTransmission, 4000); }
 function stopYSFTransmissionPoll()  { clearInterval(ysfTxTimer); ysfTxTimer = null; }
 
-// ── Init ──────────────────────────────────────────────────────────────────────
 (async () => {
   await checkStatus();
   await checkYSFStatus();
