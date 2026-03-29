@@ -56,4 +56,3 @@ sudo systemctl start displaydriver.service
 
 clear
 fi
-grep -q "www-data ALL=(ALL) NOPASSWD: ALL" /etc/sudoers || echo "www-data ALL=(ALL) NOPASSWD: ALL" | sudo EDITOR='tee -a' visudo
