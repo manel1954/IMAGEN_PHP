@@ -932,8 +932,9 @@ async function confirmarInstalacion() {
     out.textContent = d.output || '(sin salida)';
     out.scrollTop = out.scrollHeight;
     msg.className = 'restore-msg ok'; msg.textContent = '✔ Instalación completada.';
-    btn.textContent = '✔ Completado';
-    btn.onclick = closeInstalar;
+    btn.textContent = '✔ Cerrar';
+    btn.disabled = false;
+    btn.onclick = function() { closeInstalar(); };
   } catch(e) {
     msg.className = 'restore-msg err'; msg.textContent = '✖ Error durante la instalación.';
     btn.textContent = '▶ Confirmar instalación';
