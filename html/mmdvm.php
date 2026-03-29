@@ -111,6 +111,14 @@ if ($action === 'display-restart') {
     exit;
 }
 
+// ── Instalar Display Driver ───────────────────────────────────────────────────
+if ($action === 'install-display') {
+    $output = shell_exec('sudo /home/pi/A108/instalar_displaydriver.sh 2>&1');
+    header('Content-Type: application/json');
+    echo json_encode(['ok' => true, 'output' => htmlspecialchars($output ?? '')]);
+    exit;
+}
+
 // ── Backup configuraciones ────────────────────────────────────────────────────
 if ($action === 'backup-configs') {
     $zipName = 'Copia_A108_' . date('Ymd_His') . '.zip';
@@ -158,8 +166,7 @@ if ($action === 'restore-configs') {
         echo json_encode(['ok' => false, 'msg' => 'No se pudo abrir el ZIP.']);
         exit;
     }
-    $restored = [];
-    $errors   = [];
+    $restored = []; $errors = [];
     for ($i = 0; $i < $zip->numFiles; $i++) {
         $name = basename($zip->getNameIndex($i));
         if (isset($destMap[$name])) {
@@ -500,41 +507,29 @@ if ($action === 'ysf-transmission') {
   .ysf-section-title::after { content: ''; flex: 1; height: 1px; background: linear-gradient(90deg, rgba(181,122,255,.4), transparent); }
 
   /* ── Modal restore ── */
-  .restore-modal {
-    display: none; position: fixed; inset: 0;
-    background: rgba(0,0,0,.75); z-index: 9000;
-    align-items: center; justify-content: center;
-  }
+  .restore-modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,.75); z-index: 9000; align-items: center; justify-content: center; }
   .restore-modal.open { display: flex; }
-  .restore-box {
-    background: var(--surface); border: 1px solid var(--border);
-    border-radius: 8px; padding: 2rem; min-width: 380px; max-width: 90vw;
-  }
+  .restore-box { background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 2rem; min-width: 380px; max-width: 90vw; }
   .restore-title { font-family: var(--font-mono); font-size: .8rem; color: var(--amber); letter-spacing: .12em; text-transform: uppercase; margin-bottom: 1.2rem; }
   .restore-label { font-family: var(--font-mono); font-size: .72rem; color: var(--text); display: block; margin-bottom: .5rem; }
-  .restore-file {
-    width: 100%; background: #0d1e2a; border: 1px solid var(--border);
-    border-radius: 4px; color: var(--green); font-family: var(--font-mono);
-    font-size: .8rem; padding: .5rem; margin-bottom: 1rem;
-  }
+  .restore-file { width: 100%; background: #0d1e2a; border: 1px solid var(--border); border-radius: 4px; color: var(--green); font-family: var(--font-mono); font-size: .8rem; padding: .5rem; margin-bottom: 1rem; }
   .restore-btns { display: flex; gap: .8rem; }
-  .restore-btn-ok {
-    flex: 1; background: #28a745; color: #fff; border: none; border-radius: 6px;
-    font-family: var(--font-mono); font-size: .8rem; letter-spacing: .08em;
-    text-transform: uppercase; padding: .6rem; cursor: pointer; transition: background .2s;
-  }
+  .restore-btn-ok { flex: 1; background: #28a745; color: #fff; border: none; border-radius: 6px; font-family: var(--font-mono); font-size: .8rem; letter-spacing: .08em; text-transform: uppercase; padding: .6rem; cursor: pointer; transition: background .2s; }
   .restore-btn-ok:hover { background: #218838; }
-  .restore-btn-cancel {
-    flex: 1; background: transparent; color: var(--text-dim);
-    border: 1px solid var(--border); border-radius: 6px;
-    font-family: var(--font-mono); font-size: .8rem; letter-spacing: .08em;
-    text-transform: uppercase; padding: .6rem; cursor: pointer; transition: all .2s;
-  }
+  .restore-btn-cancel { flex: 1; background: transparent; color: var(--text-dim); border: 1px solid var(--border); border-radius: 6px; font-family: var(--font-mono); font-size: .8rem; letter-spacing: .08em; text-transform: uppercase; padding: .6rem; cursor: pointer; transition: all .2s; }
   .restore-btn-cancel:hover { border-color: var(--text); color: var(--text); }
   .restore-msg { margin-top: .8rem; font-family: var(--font-mono); font-size: .75rem; display: none; padding: .5rem .8rem; border-radius: 4px; border: 1px solid; }
   .restore-msg.ok  { color: var(--green); border-color: var(--green); background: rgba(0,255,159,.06); }
   .restore-msg.err { color: var(--red);   border-color: var(--red);   background: rgba(255,69,96,.06); }
   .restore-msg.loading { color: var(--amber); border-color: var(--amber); background: rgba(255,179,0,.06); }
+
+  /* ── Modal instalar ── */
+  .install-modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,.75); z-index: 9000; align-items: center; justify-content: center; }
+  .install-modal.open { display: flex; }
+  .install-box { background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 2rem; min-width: 480px; max-width: 90vw; }
+  .install-title { font-family: var(--font-mono); font-size: .8rem; color: var(--green); letter-spacing: .12em; text-transform: uppercase; margin-bottom: 1.2rem; }
+  .install-output { font-family: var(--font-mono); font-size: .72rem; color: #7a9ab5; background: #060c10; border: 1px solid var(--border); border-radius: 4px; padding: .8rem; height: 200px; overflow-y: auto; white-space: pre-wrap; word-break: break-all; margin-bottom: 1rem; display: none; }
+  .install-output.visible { display: block; }
 </style>
 </head>
 <body>
@@ -548,6 +543,9 @@ if ($action === 'ysf-transmission') {
   </a>
   <button onclick="activarDisplay()" class="btn-header green">
     ▶ Activar Display Driver
+  </button>
+  <button onclick="instalarDisplay()" class="btn-header amber" id="btnInstalar">
+    ⚙ Instalar Display-Driver
   </button>
   <a href="?action=backup-configs" class="btn-header amber">
     💾 Backup Configs
@@ -700,6 +698,19 @@ if ($action === 'ysf-transmission') {
       <button class="restore-btn-cancel" onclick="closeRestore()">✖ Cancelar</button>
     </div>
     <div id="restoreMsg" class="restore-msg"></div>
+  </div>
+</div>
+
+<!-- Modal Instalar Display Driver -->
+<div id="installModal" class="install-modal">
+  <div class="install-box">
+    <div class="install-title">⚙ Instalar Display Driver</div>
+    <div id="installOutput" class="install-output"></div>
+    <div class="restore-btns">
+      <button class="restore-btn-ok" id="btnInstalarOk" onclick="confirmarInstalacion()">▶ Confirmar instalación</button>
+      <button class="restore-btn-cancel" onclick="closeInstalar()">✖ Cancelar</button>
+    </div>
+    <div id="installMsg" class="restore-msg"></div>
   </div>
 </div>
 
@@ -892,6 +903,41 @@ async function activarDisplay() {
   if (!confirm('¿Activar el servicio Display Driver?')) return;
   await fetch('?action=display-restart');
   alert('✔ Display Driver activado correctamente.');
+}
+
+// ── Instalar Display Driver ───────────────────────────────────────────────────
+function instalarDisplay() {
+  document.getElementById('installModal').classList.add('open');
+  document.getElementById('installOutput').className = 'install-output';
+  document.getElementById('installOutput').textContent = '';
+  document.getElementById('installMsg').style.display = 'none';
+  document.getElementById('installMsg').className = 'restore-msg';
+  document.getElementById('btnInstalarOk').disabled = false;
+  document.getElementById('btnInstalarOk').textContent = '▶ Confirmar instalación';
+}
+
+function closeInstalar() { document.getElementById('installModal').classList.remove('open'); }
+
+async function confirmarInstalacion() {
+  const btn = document.getElementById('btnInstalarOk');
+  const msg = document.getElementById('installMsg');
+  const out = document.getElementById('installOutput');
+  btn.disabled = true;
+  btn.textContent = '⏳ Instalando…';
+  msg.className = 'restore-msg loading'; msg.style.display = 'block'; msg.textContent = '⏳ Ejecutando instalador, espera…';
+  out.className = 'install-output visible'; out.textContent = '';
+  try {
+    const r = await fetch('?action=install-display');
+    const d = await r.json();
+    out.textContent = d.output || '(sin salida)';
+    out.scrollTop = out.scrollHeight;
+    msg.className = 'restore-msg ok'; msg.textContent = '✔ Instalación completada.';
+    btn.textContent = '✔ Completado';
+  } catch(e) {
+    msg.className = 'restore-msg err'; msg.textContent = '✖ Error durante la instalación.';
+    btn.textContent = '▶ Confirmar instalación';
+    btn.disabled = false;
+  }
 }
 
 // ── Restore modal ─────────────────────────────────────────────────────────────
