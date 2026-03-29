@@ -100,6 +100,14 @@ if ($action === 'reboot') {
     exit;
 }
 
+// ── Shutdown ─────────────────────────────────────────────────────────
+if ($action === 'shutdown') {
+    shell_exec('sudo /usr/bin/systemctl poweroff 2>/dev/null');
+    header('Content-Type: application/json');
+    echo json_encode(['ok' => true]);
+    exit;
+}
+
 // ── Display Driver restart ───────────────────────────────────────────
 if ($action === 'display-restart') {
     shell_exec('sudo systemctl restart displaydriver.service 2>/dev/null');
@@ -217,6 +225,26 @@ if ($action === 'ysf-logs') {
     exit;
 }
 
+// ── System Info ──────────────────────────────────────────────────────
+if ($action === 'system-info') {
+    $temp = trim(shell_exec('vcgencmd measure_temp 2>/dev/null | cut -d= -f2'));
+    $ram = shell_exec('free -m | awk \'NR==2{printf "%.2f%%", $3*100/$2}\'');
+    $disk = shell_exec('df -h / | awk \'NR==2{printf "%s", $5}\'');
+    $uptime = shell_exec('uptime -p 2>/dev/null');
+    header('Content-Type: application/json');
+    echo json_encode(['temp' => $temp, 'ram' => $ram, 'disk' => $disk, 'uptime' => $uptime]);
+    exit;
+}
+
+// ── Network Info ─────────────────────────────────────────────────────
+if ($action === 'network-info') {
+    $ip = trim(shell_exec('hostname -I 2>/dev/null | awk \'{print $1}\''));
+    $gateway = trim(shell_exec('systemctl is-active dmrgateway 2>/dev/null'));
+    header('Content-Type: application/json');
+    echo json_encode(['ip' => $ip, 'gateway' => $gateway]);
+    exit;
+}
+
 // ── DMR Id lookup ────────────────────────────────────────────────────
 function lookupCall($callsign) {
     $datFiles = [
@@ -314,6 +342,7 @@ body { background: var(--bg); color: var(--text); font-family: var(--font-ui); f
 .ctrl-header { border-bottom: 1px solid var(--border); padding: 1.2rem 2rem; display: flex; align-items: center; gap: .8rem; background: var(--surface); flex-wrap: wrap; }
 .ctrl-header h1 { font-family: var(--font-ui); font-weight: 700; font-size: 1.5rem; letter-spacing: .08em; color: #e2eaf5; margin: 0; text-transform: uppercase; }
 .ctrl-header .uptime { margin-left: auto; font-family: var(--font-mono); font-size: .8rem; color: var(--text-dim); }
+.ctrl-header .sys-info { font-family: var(--font-mono); font-size: .7rem; color: var(--cyan); margin-left: 1rem; }
 .btn-header { font-family: var(--font-mono); font-size: .75rem; letter-spacing: .08em; text-transform: uppercase; background: transparent; border-radius: 4px; padding: .35rem .9rem; cursor: pointer; transition: background .2s; text-decoration: none; display: inline-block; }
 .btn-header.cyan { color: var(--cyan); border: 1px solid var(--cyan); }
 .btn-header.cyan:hover { background: rgba(0,212,255,.1); color: var(--cyan); }
@@ -485,12 +514,15 @@ button.btn-header { font-family: var(--font-mono); }
 <img src="Logo_ea3eiz.png" alt="EA3EIZ" style="height:40px; width:auto;">
 <h1>MMDVM &amp; YSF Control</h1>
 <span class="uptime" id="clock">--:--:--</span>
+<span class="uptime" id="networkInfo" style="margin-left:1rem;">IP: --.--.--.--</span>
+<span class="sys-info" id="systemInfo">CPU: --°C | RAM: --% | DISK: --%</span>
 <a href="edit_ini.php?file=displaydriver" target="_blank" class="btn-header cyan"> 📄 Config Display-Driver </a>
 <button onclick="activarDisplay()" class="btn-header green"> ▶ Activar Display Driver </button>
 <button onclick="instalarDisplay()" class="btn-header amber" id="btnInstalar"> ⚙ Instalar Display-Driver </button>
 <a href="?action=backup-configs" class="btn-header amber"> 💾 Backup Configs </a>
 <button onclick="openRestore()" class="btn-header cyan"> 📂 Restore Configs </button>
 <button id="btnReboot" class="btn-header red" onclick="rebootPi()">⏻ Reiniciar Pi</button>
+<button id="btnShutdown" class="btn-header red" onclick="shutdownPi()">⏻ Apagar Pi</button>
 </header>
 <main class="ctrl-body">
 <div class="status-bar">
@@ -708,6 +740,29 @@ function updateClock() {
 }
 setInterval(updateClock, 1000); updateClock();
 
+// 🔽 INFORMACIÓN DEL SISTEMA
+async function updateSystemInfo() {
+    try {
+        const r = await fetch('?action=system-info');
+        const d = await r.json();
+        document.getElementById('systemInfo').innerHTML = 
+            `CPU: ${d.temp || '--'} | RAM: ${d.ram || '--'} | DISK: ${d.disk || '--'}`;
+    } catch(e) {}
+}
+setInterval(updateSystemInfo, 30000);
+updateSystemInfo();
+
+// 🔽 INFORMACIÓN DE RED
+async function updateNetworkInfo() {
+    try {
+        const r = await fetch('?action=network-info');
+        const d = await r.json();
+        document.getElementById('networkInfo').textContent = `IP: ${d.ip || '---'}`;
+    } catch(e) {}
+}
+setInterval(updateNetworkInfo, 60000);
+updateNetworkInfo();
+
 function esc(s) { return String(s || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
 
 function showIdle() {
@@ -791,6 +846,7 @@ function refreshYSFButton() { const on = ysfRunning || mmdvmYsfRunning; document
 async function toggleServices() { const btn = document.getElementById('btnToggle'); const wasOpen = running; btn.classList.add('busy'); document.getElementById('btnLabel').textContent = wasOpen?'Deteniendo…':'Iniciando…'; try { await fetch(wasOpen?'?action=stop':'?action=start'); await new Promise(r => setTimeout(r,2200)); await checkStatus(); if (wasOpen) { stopRefresh(); clearLog('logGw'); clearLog('logMmd'); showIdle(); document.getElementById('lhBody').innerHTML='<div class="lh-empty">Sin actividad reciente</div>'; } else startRefresh(); } finally { btn.classList.remove('busy'); } }
 async function toggleYSF() { const btn = document.getElementById('btnYSF'); const wasOpen = ysfRunning || mmdvmYsfRunning; btn.classList.add('busy'); document.getElementById('btnYSFLabel').textContent = wasOpen?'Deteniendo…':'Iniciando…'; try { if (wasOpen) { await fetch('?action=ysf-stop'); await new Promise(r => setTimeout(r,1000)); await fetch('?action=mmdvmysf-stop'); await new Promise(r => setTimeout(r,2000)); clearLog('logYsf'); clearLog('logMmdvmYsf'); stopYSFLogs(); stopMMDVMYSFLogs(); showYSFIdle(); document.getElementById('ysfLhBody').innerHTML='<div class="lh-empty">Sin actividad C4FM</div>'; } else { await fetch('?action=mmdvmysf-start'); await new Promise(r => setTimeout(r,2000)); await fetch('?action=ysf-start'); await new Promise(r => setTimeout(r,1500)); startYSFLogs(); startMMDVMYSFLogs(); } await checkYSFStatus(); await checkMMDVMYSFStatus(); } finally { btn.classList.remove('busy'); } }
 async function rebootPi() { if (!confirm('¿Seguro que quieres reiniciar la Raspberry Pi?')) return; const btn = document.getElementById('btnReboot'); btn.textContent = '⏻ Reiniciando…'; btn.disabled = true; await fetch('?action=reboot'); }
+async function shutdownPi() { if (!confirm('¿Seguro que quieres APAGAR la Raspberry Pi?')) return; const btn = document.getElementById('btnShutdown'); btn.textContent = '⏻ Apagando…'; btn.disabled = true; await fetch('?action=shutdown'); }
 async function activarDisplay() { if (!confirm('¿Activar el servicio Display Driver?')) return; await fetch('?action=display-restart'); alert('✔ Display Driver activado correctamente.'); }
 function instalarDisplay() { document.getElementById('installModal').classList.add('open'); document.getElementById('installOutput').className = 'install-output'; document.getElementById('installOutput').textContent = ''; document.getElementById('installMsg').style.display = 'none'; document.getElementById('installMsg').className = 'restore-msg'; document.getElementById('btnInstalarOk').disabled = false; document.getElementById('btnInstalarOk').textContent = '▶ Confirmar instalación'; }
 function closeInstalar() { document.getElementById('installModal').classList.remove('open'); }
