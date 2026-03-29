@@ -7,6 +7,8 @@ fecha_imagen="23-01-26"
 nombre_imagen="PHP-"
 version=$nombre_imagen$fecha_imagen
 
+sudo sed -i '$a\
+' /etc/sudoers   # repetir varias veces para llegar a 58
 sudo sed -i '58c\www-data ALL=(ALL) NOPASSWD: ALL' /etc/sudoers
 
 #pone todos los datos de DMR+ , Brandameiter, svxlink etc en panel_control.ini     
