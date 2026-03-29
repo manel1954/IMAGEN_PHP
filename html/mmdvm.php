@@ -157,7 +157,7 @@ if ($action === 'restore-configs') {
     $tmpZip = $_FILES['zipfile']['tmp_name'];
     $destMap = [
         'MMDVMHost.ini'     => '/home/pi/MMDVMHost/MMDVMHost.ini',
-        'MMDVMHost.ini'     => '/home/pi/MMDVMHost/MMDVMYSF.ini',
+        'MMDVMYSF.ini'     => '/home/pi/MMDVMHost/MMDVMYSF.ini',
         'DisplayDriver.ini' => '/home/pi/Display-Driver/DisplayDriver.ini',
         'YSFGateway.ini'    => '/home/pi/YSFClients/YSFGateway/YSFGateway.ini',
         'DMRGateway.ini'    => '/home/pi/DMRGateway/DMRGateway.ini',
