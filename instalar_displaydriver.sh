@@ -1,63 +1,37 @@
+sudo tee /home/pi/A108/instalar_displaydriver.sh << 'EOF'
 #!/bin/bash
-#Colores
-ROJO="\033[1;31m"
-VERDE="\033[1;32m"
-BLANCO="\033[1;37m"
-AMARILLO="\033[1;33m"
-CIAN="\033[1;36m"
-GRIS="\033[0m"
-MARRON="\033[38;5;138m"                       
-                        
 if [ -d "/home/pi/Display-Driver" ]; then
-    echo -e "${VERDE}"
-    echo -e "********************************************************"
-    echo -e "         El Display-Driver ya ha sido instalado."
-    echo -e "********************************************************"
-    echo -e "${AMARILLO}"
-    echo -e "PULSA ENTER PARA CONTINUAR"
-    read a
-    clear
-else
+    echo "El Display-Driver ya ha sido instalado."
+    exit 0
+fi
 
 cd /home/pi
 git clone https://github.com/g4klx/Display-Driver.git
-
-
 sleep 2
 cd Display-Driver
 make
-sudo make install
+make install
+chmod 777 -R /home/pi/Display-Driver
+apt-get install -y php-zip
+systemctl restart apache2
 
-sudo chmod 777 -R /home/pi/Display-Driver
-
-sudo apt-get install -y php-zip
-sudo systemctl restart apache2
-#sudo nano /etc/php/8.2/apache2/php.ini
-
-sudo tee /etc/systemd/system/displaydriver.service << 'EOF'
+tee /etc/systemd/system/displaydriver.service << 'SVCEOF'
 [Unit]
 Description=MMDVM Display-Driver for Nextion via MQTT
 After=mosquitto.service mmdvmhost.service
-
 [Service]
 Type=simple
 User=root
 WorkingDirectory=/home/pi/Display-Driver
 ExecStart=/home/pi/Display-Driver/DisplayDriver DisplayDriver.ini
 Restart=always
-
 [Install]
 WantedBy=multi-user.target
+SVCEOF
+
+systemctl daemon-reload
+systemctl enable displaydriver.service
+systemctl start displaydriver.service
+echo "Instalacion completada correctamente."
 EOF
-
-sudo systemctl daemon-reload
-sudo systemctl enable displaydriver.service
-sudo systemctl start displaydriver.service
-
-clear
-fi
-
-
-
-#grep -q "www-data ALL=(ALL) NOPASSWD: /bin/systemctl restart displaydriver.service" /etc/sudoers || echo "www-data ALL=(ALL) NOPASSWD: /bin/systemctl restart displaydriver.service" | sudo EDITOR='tee -a' visudo
-
+sudo chmod +x /home/pi/A108/instalar_displaydriver.sh
