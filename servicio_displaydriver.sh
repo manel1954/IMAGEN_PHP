@@ -17,6 +17,8 @@ WantedBy=multi-user.target
 EOF
 
 sudo systemctl daemon-reload
+sleep 2
 sudo systemctl enable displaydriver.service
+sleep 2
 sudo systemctl start displaydriver.service
 
