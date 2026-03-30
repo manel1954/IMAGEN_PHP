@@ -103,8 +103,8 @@ if ($action === 'reboot') {
 // ── Display Driver restart ───────────────────────────────────────────
 if ($action === 'display-restart') {
     shell_exec('sudo systemctl daemon-reload 2>/dev/null');
-    shell_exec('sudo systemctl enable displaydriver.service 2>/dev/null');
-    shell_exec('sudo systemctl restart displaydriver.service 2>/dev/null');
+    shell_exec('sudo systemctl enable displaydriver 2>/dev/null');
+    shell_exec('sudo systemctl restart displaydriver 2>/dev/null');
     header('Content-Type: application/json');
     echo json_encode(['ok' => true]);
     exit;
