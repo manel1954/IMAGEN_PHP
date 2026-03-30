@@ -34,25 +34,26 @@ sudo apt-get install -y php-zip
 sudo systemctl restart apache2
 #sudo nano /etc/php/8.2/apache2/php.ini
 
-sudo tee /etc/systemd/system/displaydriver.service << 'EOF'
-[Unit]
-Description=MMDVM Display-Driver for Nextion via MQTT
-After=mosquitto.service mmdvmhost.service
-
-[Service]
-Type=simple
-User=root
-WorkingDirectory=/home/pi/Display-Driver
-ExecStart=/home/pi/Display-Driver/DisplayDriver DisplayDriver.ini
-Restart=always
-
-[Install]
-WantedBy=multi-user.target
-EOF
-
-sudo systemctl daemon-reload
-sudo systemctl enable displaydriver.service
-sudo systemctl start displaydriver.service
-
+#sudo tee /etc/systemd/system/displaydriver.service << 'EOF'
+#[Unit]
+#Description=MMDVM Display-Driver for Nextion via MQTT
+#After=mosquitto.service mmdvmhost.service
+#
+#[Service]
+#Type=simple
+#User=root
+#WorkingDirectory=/home/pi/Display-Driver
+#ExecStart=/home/pi/Display-Driver/DisplayDriver DisplayDriver.ini
+#Restart=always
+#
+#[Install]
+#WantedBy=multi-user.target
+#EOF
+#
+#sudo systemctl daemon-reload
+#sudo systemctl enable displaydriver.service
+#sudo systemctl start displaydriver.service
+cd /home/pi/A108
+./servicio_displaydriver.sh
 clear
 fi
