@@ -20,14 +20,14 @@ if [ -d "/home/pi/A108" ]; then
 
 
 if [ -d "/home/pi/Display-Driver" ]; then
-    echo -e "${VERDE}"
+    #echo -e "${VERDE}"
     echo "********************************************************"
     echo "         Display-Driver ya ha sido instalado."
     echo "********************************************************"
-    echo -e "${AMARILLO}"
-    echo "PULSA ENTER PARA CONTINUAR"
-    read -r a
-    clear
+    #echo -e "${AMARILLO}"
+    #echo "PULSA ENTER PARA CONTINUAR"
+    #read -r a
+    #clear
 else
     cd /home/pi
     git clone https://github.com/g4klx/Display-Driver.git
