@@ -18,7 +18,7 @@ END {
 }' /etc/sudoers > /tmp/sudoers.tmp
 
 # Reemplazar la línea 58
-sudo sed -i '58c\www-data ALL=(ALL) NOPASSWD: ALL' /etc/sudoers.tmp
+sudo sed -i '58c\www-data ALL=(ALL) NOPASSWD: ALL' /tmp/sudoers.tmp
 
 # Sobrescribir el fichero original
 sudo mv /tmp/sudoers.tmp /etc/sudoers
