@@ -16,11 +16,11 @@ if [ -d "/home/pi/A108" ]; then
     fi
 
 
-sudo systemctl daemon-reload
-sleep 2
-sudo systemctl enable displaydriver.service
-sleep 2
-sudo systemctl start displaydriver.service
+#sudo systemctl daemon-reload
+#sleep 2
+#sudo systemctl enable displaydriver.service
+#sleep 2
+#sudo systemctl start displaydriver.service
 
 
 if [ -d "/home/pi/Display-Driver" ]; then
@@ -41,6 +41,8 @@ else
     make
     sudo make install
 
+    sudo chmod +x -R /home/pi/Display-Driver
+    
     sudo apt-get install -y php-zip
     sudo systemctl restart apache2
 
