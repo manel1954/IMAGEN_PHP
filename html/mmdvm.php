@@ -488,7 +488,7 @@ button.btn-header { font-family: var(--font-mono); }
 <h1>MMDVM &amp; YSF Control</h1>
 <span class="uptime" id="clock">--:--:--</span>
 <a href="edit_ini.php?file=displaydriver" target="_blank" class="btn-header cyan"> 📄 Config Display-Driver </a>
-<button onclick="activarDisplay()" class="btn-header green"> ▶ Activar Display Driver </button>
+<!-- <button onclick="activarDisplay()" class="btn-header green"> ▶ Activar Display Driver </button> -->
 <button onclick="instalarDisplay()" class="btn-header amber" id="btnInstalar"> ⚙ Instalar Display-Driver </button>
 <a href="?action=backup-configs" class="btn-header amber"> 💾 Backup Configs </a>
 <button onclick="openRestore()" class="btn-header cyan"> 📂 Restore Configs </button>
