@@ -54,6 +54,6 @@ sudo systemctl restart apache2
 #sudo systemctl enable displaydriver.service
 #sudo systemctl start displaydriver.service
 cd /home/pi/A108
-./servicio_displaydriver.sh
+sudo sh servicio_displaydriver.sh
 clear
 fi
