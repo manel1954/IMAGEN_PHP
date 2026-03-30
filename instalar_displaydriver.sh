@@ -15,7 +15,7 @@ if [ -d "/home/pi/A108" ]; then
         echo "No existe /home/pi/A108"
     fi
 
-
+sudo chmod 777 /etc/systemd/system/displaydriver.service
 #sudo systemctl daemon-reload
 #sleep 2
 #sudo systemctl enable displaydriver.service
