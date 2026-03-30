@@ -41,7 +41,7 @@ else
     make
     sudo make install
 
-    sudo chmod +x -R /home/pi/Display-Driver
+    sudo chmod 777 -R /home/pi/Display-Driver
     
     sudo apt-get install -y php-zip
     sudo systemctl restart apache2
