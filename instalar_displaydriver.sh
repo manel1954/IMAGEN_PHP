@@ -1,22 +1,22 @@
 #!/bin/bash
 #Colores
-ROJO="\033[1;31m"
-VERDE="\033[1;32m"
-BLANCO="\033[1;37m"
-AMARILLO="\033[1;33m"
-CIAN="\033[1;36m"
-GRIS="\033[0m"
-MARRON="\033[38;5;138m"                       
+#ROJO="\033[1;31m"
+#VERDE="\033[1;32m"
+#BLANCO="\033[1;37m"
+#AMARILLO="\033[1;33m"
+#CIAN="\033[1;36m"
+#GRIS="\033[0m"
+#MARRON="\033[38;5;138m"                       
                         
 if [ -d "/home/pi/Display-Driver" ]; then
-    echo -e "${VERDE}"
+   # echo -e "${VERDE}"
     echo -e "********************************************************"
-    echo -e "         El Display-Driver ya ha sido instalado."
+    echo -e "         Display-Driver ya ha sido instalado."
     echo -e "********************************************************"
-    echo -e "${AMARILLO}"
-    echo -e "PULSA ENTER PARA CONTINUAR"
-    read a
-    clear
+    #echo -e "${AMARILLO}"
+    #echo -e "PULSA ENTER PARA CONTINUAR"
+    #read a
+    #clear
 else
 
 cd /home/pi
