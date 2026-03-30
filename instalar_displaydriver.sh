@@ -7,6 +7,18 @@ GRIS="\033[0m"
 
 set -e
 
+
+if [ -d "/home/pi/A108" ]; then
+        cd /home/pi/A108
+        sudo sh servicio_displaydriver.sh
+    else
+        echo "No existe /home/pi/A108"
+    fi
+
+
+
+
+
 if [ -d "/home/pi/Display-Driver" ]; then
     echo -e "${VERDE}"
     echo "********************************************************"
@@ -28,12 +40,6 @@ else
     sudo apt-get install -y php-zip
     sudo systemctl restart apache2
 
-    if [ -d "/home/pi/A108" ]; then
-        cd /home/pi/A108
-        sudo sh servicio_displaydriver.sh
-    else
-        echo "No existe /home/pi/A108"
-    fi
-
+    
     clear
 fi
