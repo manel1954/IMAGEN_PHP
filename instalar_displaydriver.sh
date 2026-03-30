@@ -16,7 +16,11 @@ if [ -d "/home/pi/A108" ]; then
     fi
 
 
-
+sudo systemctl daemon-reload
+sleep 2
+sudo systemctl enable displaydriver.service
+sleep 2
+sudo systemctl start displaydriver.service
 
 
 if [ -d "/home/pi/Display-Driver" ]; then
