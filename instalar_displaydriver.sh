@@ -1,59 +1,39 @@
 #!/bin/bash
-#Colores
+
 ROJO="\033[1;31m"
 VERDE="\033[1;32m"
-BLANCO="\033[1;37m"
 AMARILLO="\033[1;33m"
-CIAN="\033[1;36m"
 GRIS="\033[0m"
-MARRON="\033[38;5;138m"                       
-                        
+
+set -e
+
 if [ -d "/home/pi/Display-Driver" ]; then
     echo -e "${VERDE}"
-    echo -e "********************************************************"
-    echo -e "         Display-Driver ya ha sido instalado."
-    echo -e "********************************************************"
+    echo "********************************************************"
+    echo "         Display-Driver ya ha sido instalado."
+    echo "********************************************************"
     echo -e "${AMARILLO}"
-    echo -e "PULSA ENTER PARA CONTINUAR"
-    read a
+    echo "PULSA ENTER PARA CONTINUAR"
+    read -r a
     clear
 else
+    cd /home/pi
+    git clone https://github.com/g4klx/Display-Driver.git
 
-cd /home/pi
-git clone https://github.com/g4klx/Display-Driver.git
+    sleep 2
+    cd /home/pi/Display-Driver
+    make
+    sudo make install
 
+    sudo apt-get install -y php-zip
+    sudo systemctl restart apache2
 
-sleep 2
-cd Display-Driver
-make
-sudo make install
+    if [ -d "/home/pi/A108" ]; then
+        cd /home/pi/A108
+        sudo sh servicio_displaydriver.sh
+    else
+        echo "No existe /home/pi/A108"
+    fi
 
-sudo chmod 777 -R /home/pi/Display-Driver
-
-sudo apt-get install -y php-zip
-sudo systemctl restart apache2
-#sudo nano /etc/php/8.2/apache2/php.ini
-
-#sudo tee /etc/systemd/system/displaydriver.service << 'EOF'
-#[Unit]
-#Description=MMDVM Display-Driver for Nextion via MQTT
-#After=mosquitto.service mmdvmhost.service
-#
-#[Service]
-#Type=simple
-#User=root
-#WorkingDirectory=/home/pi/Display-Driver
-#ExecStart=/home/pi/Display-Driver/DisplayDriver DisplayDriver.ini
-#Restart=always
-#
-#[Install]
-#WantedBy=multi-user.target
-#EOF
-#
-#sudo systemctl daemon-reload
-#sudo systemctl enable displaydriver.service
-#sudo systemctl start displaydriver.service
-cd /home/pi/A108
-sudo sh servicio_displaydriver.sh
-clear
+    clear
 fi
