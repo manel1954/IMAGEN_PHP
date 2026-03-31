@@ -1,3 +1,9 @@
+
+
+
+
+
+
 <?php
 
 require_once __DIR__ . '/auth.php';
@@ -1076,5 +1082,63 @@ function stopYSFTransmissionPoll()  { clearInterval(ysfTxTimer); ysfTxTimer = nu
   startYSFTransmissionPoll();
 })();
 </script>
+
+
+<?php
+/*
+ * ============================================================
+ *  BLOQUE DVSwitch (iframe) — añade esto dentro de mmdvm.php
+ *  Colócalo donde quieras el panel, por ejemplo al final
+ *  antes del </div> principal o </body>
+ * ============================================================
+ */
+?>
+
+<!-- ===================== PANEL DVSWITCH IFRAME ===================== -->
+<div class="row mt-4">
+  <div class="col-12">
+    <div class="card dark-card">
+      <div class="card-header d-flex align-items-center justify-content-between"
+           style="background: linear-gradient(90deg,#1a2540,#1e2d50); border-bottom:1px solid #7eb8f733;">
+        <span style="color:#7eb8f7; font-weight:700; letter-spacing:2px; font-size:1.05rem;">
+          <i class="bi bi-broadcast me-2"></i>DVSwitch Dashboard
+        </span>
+        <div class="d-flex align-items-center gap-2">
+          <!-- Botón abrir en ventana nueva -->
+          <a href="http://<?= $_SERVER['SERVER_ADDR'] ?>:8080"
+             target="_blank"
+             class="btn btn-sm"
+             style="background:#1e3a5f; border:1px solid #7eb8f755; color:#7eb8f7; font-size:.8rem;">
+            <i class="bi bi-box-arrow-up-right me-1"></i>Abrir en nueva ventana
+          </a>
+          <!-- Botón recargar iframe -->
+          <button class="btn btn-sm"
+                  style="background:#1e3a5f; border:1px solid #7eb8f755; color:#7eb8f7; font-size:.8rem;"
+                  onclick="document.getElementById('dvs-iframe').src = document.getElementById('dvs-iframe').src">
+            <i class="bi bi-arrow-clockwise me-1"></i>Recargar
+          </button>
+        </div>
+      </div>
+
+      <div class="card-body p-0" style="background:#000;">
+        <iframe
+          id="dvs-iframe"
+          src="http://192.168.1.126/dvswitch"
+          style="width:100%; height:680px; border:none; display:block;"
+          scrolling="auto"
+          allowfullscreen>
+        </iframe>
+      </div>
+
+    </div>
+  </div>
+</div>
+<!-- ============= FIN PANEL DVSWITCH IFRAME ============= -->
+
+
+
+
+
+
 </body>
 </html>
