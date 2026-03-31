@@ -1096,7 +1096,7 @@ function stopYSFTransmissionPoll()  { clearInterval(ysfTxTimer); ysfTxTimer = nu
 
 <!-- ===================== PANEL DVSWITCH IFRAME ===================== -->
 <div class="row mt-4">
-  <div class="col-12">
+  <div class="col-10 offset-1">
     <div class="card dark-card">
       <div class="card-header d-flex align-items-center justify-content-between"
            style="background: linear-gradient(90deg,#1a2540,#1e2d50); border-bottom:1px solid #7eb8f733;">
@@ -1124,7 +1124,7 @@ function stopYSFTransmissionPoll()  { clearInterval(ysfTxTimer); ysfTxTimer = nu
         <iframe
           id="dvs-iframe"
           src="http://192.168.1.126/dvswitch"
-          style="width:680px; height:680px; border:none; display:block;"
+          style="width:100%; height:680px; border:none; display:block;"
           scrolling="auto"
           allowfullscreen>
         </iframe>
