@@ -828,7 +828,7 @@ function stopYSFTransmissionPoll() { clearInterval(ysfTxTimer); ysfTxTimer = nul
 
 <!-- ===================== PANEL DVSWITCH IFRAME ===================== -->
 <div class="row mt-4">
-  <div class="col-12">
+  <div class="col-10 offset-1">
     <div class="card dark-card">
       <div class="card-header d-flex align-items-center justify-content-between"
            style="background: linear-gradient(90deg,#1a2540,#1e2d50); border-bottom:1px solid #7eb8f733;">
