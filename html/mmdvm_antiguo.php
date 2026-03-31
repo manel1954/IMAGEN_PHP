@@ -1123,7 +1123,7 @@ function stopYSFTransmissionPoll()  { clearInterval(ysfTxTimer); ysfTxTimer = nu
       <div class="card-body p-0" style="background:#000;">
         <iframe
           id="dvs-iframe"
-          src="http://<?= $_SERVER['SERVER_ADDR'] ?>:8080"
+          src="http://192.168.126/dvswitch"
           style="width:100%; height:680px; border:none; display:block;"
           scrolling="auto"
           allowfullscreen>
