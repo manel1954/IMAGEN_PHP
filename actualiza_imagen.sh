@@ -8,9 +8,7 @@
                         cp -R /home/pi/IMAGEN_PHP/html/ /var/www/
                         sleep 6                                             
                         sudo chmod 777 -R /home/pi/A108   
-                        sudo chmod 777 -R /var/www/html   
-                        sudo chmod 777 -R /home/pi/MMDVMHost
-                   
+                        sudo chmod 777 -R /var/www/html               
 
                         
                  
