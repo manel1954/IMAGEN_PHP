@@ -3,6 +3,52 @@ require_once __DIR__ . '/auth.php';
 header('X-Content-Type-Options: nosniff');
 $action = $_GET['action'] ?? '';
 
+// ── System Info ──────────────────────────────────────────────────────
+if ($action === 'sysinfo') {
+    // CPU usage: diferencia de idle entre dos lecturas de /proc/stat
+    $s1 = file('/proc/stat'); $cpu1 = preg_split('/\s+/', trim($s1[0]));
+    usleep(300000);
+    $s2 = file('/proc/stat'); $cpu2 = preg_split('/\s+/', trim($s2[0]));
+    $idle1 = $cpu1[4]; $total1 = array_sum(array_slice($cpu1, 1));
+    $idle2 = $cpu2[4]; $total2 = array_sum(array_slice($cpu2, 1));
+    $dTotal = $total2 - $total1; $dIdle = $idle2 - $idle1;
+    $cpu = $dTotal > 0 ? round(100 * ($dTotal - $dIdle) / $dTotal, 1) : 0;
+
+    // RAM
+    $memRaw = file('/proc/meminfo');
+    $mem = [];
+    foreach ($memRaw as $line) {
+        if (preg_match('/^(\w+):\s+(\d+)/', $line, $m)) $mem[$m[1]] = intval($m[2]);
+    }
+    $ramTotal = round($mem['MemTotal'] / 1048576, 2);
+    $ramFree  = round(($mem['MemAvailable'] ?? $mem['MemFree']) / 1048576, 2);
+    $ramUsed  = round($ramTotal - $ramFree, 2);
+
+    // Disco (partición raíz)
+    $diskTotal = round(disk_total_space('/') / 1073741824, 1);
+    $diskFree  = round(disk_free_space('/') / 1073741824, 1);
+    $diskUsed  = round($diskTotal - $diskFree, 1);
+
+    // Temperatura CPU (Raspberry Pi)
+    $temp = '';
+    if (file_exists('/sys/class/thermal/thermal_zone0/temp')) {
+        $temp = round(intval(trim(file_get_contents('/sys/class/thermal/thermal_zone0/temp'))) / 1000, 1) . ' °C';
+    }
+
+    header('Content-Type: application/json');
+    echo json_encode([
+        'cpu'       => $cpu,
+        'ramTotal'  => $ramTotal,
+        'ramUsed'   => $ramUsed,
+        'ramFree'   => $ramFree,
+        'diskTotal' => $diskTotal,
+        'diskUsed'  => $diskUsed,
+        'diskFree'  => $diskFree,
+        'temp'      => $temp,
+    ]);
+    exit;
+}
+
 // ── DMR status ───────────────────────────────────────────────────────
 if ($action === 'status') {
     $gw = trim(shell_exec('systemctl is-active dmrgateway 2>/dev/null'));
@@ -328,6 +374,116 @@ body { background: var(--bg); color: var(--text); font-family: var(--font-ui); f
 button.btn-header { font-family: var(--font-mono); }
 .btn-header:disabled { opacity: .5; pointer-events: none; }
 .ctrl-body { padding: 2rem; max-width: 1400px; margin: 0 auto; }
+
+/* ── Station Info Card ──────────────────────────────────────────── */
+.station-card {
+    background: linear-gradient(135deg, #111720 60%, #0d1e2a 100%);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 1.2rem 2rem;
+    display: flex;
+    align-items: center;
+    gap: 2.5rem;
+    margin-bottom: 1.8rem;
+    flex-wrap: wrap;
+    position: relative;
+    overflow: hidden;
+}
+.station-card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 2px;
+    background: linear-gradient(90deg, transparent, var(--cyan), var(--violet), transparent);
+}
+.station-card-main {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: .3rem;
+}
+.station-callsign {
+    font-family: var(--font-orb);
+    font-size: 2.4rem;
+    font-weight: 900;
+    color: var(--cyan);
+    letter-spacing: .08em;
+    line-height: 1;
+    text-shadow: 0 0 20px rgba(0,212,255,.4), 0 0 50px rgba(0,212,255,.15);
+}
+.station-location {
+    font-family: var(--font-mono);
+    font-size: .78rem;
+    color: var(--text-dim);
+    letter-spacing: .1em;
+    text-transform: uppercase;
+    margin-top: .25rem;
+}
+.station-name-pill {
+    display: inline-block;
+    margin-top: .4rem;
+    background: linear-gradient(90deg, #1a3a5a, #1a2d4a);
+    border: 1px solid rgba(0,212,255,.35);
+    border-radius: 20px;
+    padding: .35rem 1.2rem;
+    font-family: var(--font-ui);
+    font-weight: 700;
+    font-size: 1rem;
+    color: var(--cyan);
+    letter-spacing: .1em;
+}
+.station-divider {
+    width: 1px;
+    height: 70px;
+    background: var(--border);
+    flex-shrink: 0;
+}
+.station-meta {
+    display: flex;
+    gap: 2rem;
+    flex-wrap: wrap;
+    align-items: center;
+    flex: 1;
+}
+.station-meta-item {
+    display: flex;
+    flex-direction: column;
+    gap: .15rem;
+}
+.station-meta-label {
+    font-family: var(--font-mono);
+    font-size: .6rem;
+    color: var(--text-dim);
+    letter-spacing: .15em;
+    text-transform: uppercase;
+}
+.station-meta-value {
+    font-family: var(--font-mono);
+    font-size: .95rem;
+    color: var(--amber);
+    letter-spacing: .06em;
+    font-weight: bold;
+}
+.station-meta-value.cyan { color: var(--cyan); }
+.station-meta-value.green { color: var(--green); }
+.station-meta-value.violet { color: var(--violet); }
+.station-assoc {
+    margin-left: auto;
+    font-family: var(--font-mono);
+    font-size: .7rem;
+    color: var(--text-dim);
+    letter-spacing: .12em;
+    text-transform: uppercase;
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: .3rem .8rem;
+}
+@media (max-width: 700px) {
+    .station-card { gap: 1.2rem; padding: 1rem; }
+    .station-divider { display: none; }
+    .station-assoc { margin-left: 0; }
+}
+
 .status-bar { display: flex; gap: 2rem; margin-bottom: 1.8rem; flex-wrap: wrap; align-items: center; }
 .status-item { display: flex; align-items: center; gap: .5rem; font-family: var(--font-mono); font-size: .85rem; text-transform: uppercase; letter-spacing: .08em; }
 .dot { width: 10px; height: 10px; border-radius: 50%; background: var(--text-dim); transition: background .4s, box-shadow .4s; }
@@ -495,6 +651,61 @@ button.btn-header { font-family: var(--font-mono); }
 <button id="btnReboot" class="btn-header red" onclick="rebootPi()">⏻ Reiniciar Pi</button>
 </header>
 <main class="ctrl-body">
+
+<!-- ── Tarjeta Estación EA3EIZ ──────────────────────────────────── -->
+<div class="station-card">
+    <div class="station-card-main">
+        <div class="station-callsign">📡 EA3EIZ</div>
+        <div class="station-location">Barcelona · Cataluña · JN11CK</div>
+        <div class="station-name-pill">Manel — EA3EIZ</div>
+    </div>
+    <div class="station-divider"></div>
+    <div class="station-meta">
+        <div class="station-meta-item">
+            <span class="station-meta-label">🪪 DMR ID</span>
+            <span class="station-meta-value">214317526</span>
+        </div>
+        <div class="station-meta-item">
+            <span class="station-meta-label">📡 Frecuencia</span>
+            <span class="station-meta-value cyan">430.000 MHz</span>
+        </div>
+        <div class="station-meta-item">
+            <span class="station-meta-label">📍 Locator</span>
+            <span class="station-meta-value green">JN11CK</span>
+        </div>
+        <div class="station-meta-item">
+            <span class="station-meta-label">🌍 País</span>
+            <span class="station-meta-value violet">🇪🇸 España</span>
+        </div>
+        <div class="station-divider" style="height:50px;"></div>
+        <div class="station-meta-item">
+            <span class="station-meta-label">🖥️ CPU</span>
+            <span class="station-meta-value" id="siCpu" style="color:var(--green);">—</span>
+        </div>
+        <div class="station-meta-item">
+            <span class="station-meta-label">🌡️ Temp</span>
+            <span class="station-meta-value" id="siTemp" style="color:var(--amber);">—</span>
+        </div>
+        <div class="station-meta-item">
+            <span class="station-meta-label">💾 RAM usada</span>
+            <span class="station-meta-value" id="siRam" style="color:var(--cyan);">—</span>
+        </div>
+        <div class="station-meta-item">
+            <span class="station-meta-label">💾 RAM libre</span>
+            <span class="station-meta-value" id="siRamFree" style="color:var(--text);">—</span>
+        </div>
+        <div class="station-meta-item">
+            <span class="station-meta-label">💿 Disco usado</span>
+            <span class="station-meta-value" id="siDisk" style="color:var(--amber);">—</span>
+        </div>
+        <div class="station-meta-item">
+            <span class="station-meta-label">💿 Disco libre</span>
+            <span class="station-meta-value" id="siDiskFree" style="color:var(--green);">—</span>
+        </div>
+    </div>
+    <div class="station-assoc">Associació ADER</div>
+</div>
+
 <div class="status-bar">
 <div class="status-item"><div class="dot" id="dot-mosquitto"></div><span>Mosquitto</span></div>
 <div class="status-item"><div class="dot" id="dot-gateway"></div><span>DMRGateway</span></div>
@@ -813,6 +1024,31 @@ function startMMDVMYSFLogs() { fetchMMDVMYSFLogs(); mmdvmYsfTimer = setInterval(
 function stopMMDVMYSFLogs() { clearInterval(mmdvmYsfTimer); mmdvmYsfTimer = null; }
 function startYSFTransmissionPoll() { fetchYSFTransmission(); ysfTxTimer = setInterval(fetchYSFTransmission, 4000); }
 function stopYSFTransmissionPoll() { clearInterval(ysfTxTimer); ysfTxTimer = null; }
+
+// ── System Info polling ───────────────────────────────────────────────
+async function fetchSysInfo() {
+    try {
+        const r = await fetch('?action=sysinfo');
+        const d = await r.json();
+        // CPU con color dinámico
+        const cpuEl = document.getElementById('siCpu');
+        cpuEl.textContent = d.cpu + ' %';
+        cpuEl.style.color = d.cpu > 80 ? 'var(--red)' : d.cpu > 50 ? 'var(--amber)' : 'var(--green)';
+        // Temp con color dinámico
+        const tempEl = document.getElementById('siTemp');
+        tempEl.textContent = d.temp || '—';
+        const t = parseFloat(d.temp);
+        tempEl.style.color = t > 75 ? 'var(--red)' : t > 60 ? 'var(--amber)' : 'var(--green)';
+        // RAM
+        document.getElementById('siRam').textContent     = d.ramUsed  + ' GB / ' + d.ramTotal + ' GB';
+        document.getElementById('siRamFree').textContent = d.ramFree  + ' GB';
+        // Disco
+        document.getElementById('siDisk').textContent     = d.diskUsed + ' GB / ' + d.diskTotal + ' GB';
+        document.getElementById('siDiskFree').textContent = d.diskFree + ' GB';
+    } catch(e) {}
+}
+fetchSysInfo();
+setInterval(fetchSysInfo, 8000);
 (async () => { await checkStatus(); await checkYSFStatus(); await checkMMDVMYSFStatus(); setInterval(checkStatus,10000); setInterval(checkYSFStatus,8000); setInterval(checkMMDVMYSFStatus,8000); if (running) startRefresh(); else { showIdle(); fetchTransmission(); } showYSFIdle(); startYSFLogs(); startMMDVMYSFLogs(); startYSFTransmissionPoll(); })();
 </script>
 </body>
