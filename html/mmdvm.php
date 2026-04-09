@@ -166,7 +166,7 @@ if ($action === 'install-display') {
 
 // ── Backup configuraciones ───────────────────────────────────────────
 if ($action === 'backup-configs') {
-    $zipName = 'Copia_A108_' . date('Ymd_His') . '.zip';
+    $zipName = 'Copia_A108.zip';
     $zipPath = '/tmp/' . $zipName;
     $files = [
         '/home/pi/MMDVMHost/MMDVMHost.ini',
