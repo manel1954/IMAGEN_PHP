@@ -27,20 +27,21 @@ $SECTIONS = [
     'Modem' => [
         ['key' => 'Protocol',   'label' => 'Protocolo',            'type' => 'str'],
         ['key' => 'UARTPort',   'label' => 'Puerto UART',          'type' => 'select', 'options' => [
-        ['label' => '/dev/ttyACM0', 'value' => '/dev/ttyACM0'],
-        ['label' => '/dev/ttyAMA0', 'value' => '/dev/ttyAMA0'],
-        ['label' => '/dev/ttyACM1', 'value' => '/dev/ttyACM1'],
-        ['label' => '/dev/ttyAMA1', 'value' => '/dev/ttyAMA1'],
-]],     ['key' => 'UARTSpeed',  'label' => 'Velocidad UART',       'type' => 'select', 'options' => [
-        ['label' => '115200', 'value' => '115200'],
-        ['label' => '460800', 'value' => '460800'],
+            ['label' => '/dev/ttyACM0', 'value' => '/dev/ttyACM0'],
+            ['label' => '/dev/ttyAMA0', 'value' => '/dev/ttyAMA0'],
+            ['label' => '/dev/ttyACM1', 'value' => '/dev/ttyACM1'],
+            ['label' => '/dev/ttyAMA1', 'value' => '/dev/ttyAMA1'],
+        ]],
+        ['key' => 'UARTSpeed',  'label' => 'Velocidad UART',       'type' => 'select', 'options' => [
+            ['label' => '115200', 'value' => '115200'],
+            ['label' => '460800', 'value' => '460800'],
         ]],
         ['key' => 'TXInvert',   'label' => 'TX Invertido (0/1)',   'type' => 'int'],
         ['key' => 'RXInvert',   'label' => 'RX Invertido (0/1)',   'type' => 'int'],
         ['key' => 'PTTInvert',  'label' => 'PTT Invertido (0/1)',  'type' => 'int'],
         ['key' => 'TXDelay',    'label' => 'TX Delay (ms)',        'type' => 'int'],
-        ['key' => 'RXOffset',   'label' => 'RX Offset',            'type' => 'int'],
-        ['key' => 'TXOffset',   'label' => 'TX Offset',            'type' => 'int'],
+        ['key' => 'RXOffset',   'label' => 'RX Offset',            'type' => 'int', 'signed' => true],
+        ['key' => 'TXOffset',   'label' => 'TX Offset',            'type' => 'int', 'signed' => true],
         ['key' => 'DMRDelay',   'label' => 'DMR Delay (ms)',       'type' => 'int'],
         ['key' => 'RXLevel',    'label' => 'Nivel RX (%)',         'type' => 'int'],
         ['key' => 'TXLevel',    'label' => 'Nivel TX (%)',         'type' => 'int'],
@@ -276,6 +277,7 @@ $values = readIniValues($INI_PATH, $SECTIONS);
             $val       = $values[$sec][$field['key']] ?? '';
             $inputType = $field['type'] === 'int' ? 'number' : 'text';
             $fieldId   = $sec . '_' . $field['key'];
+            $signed    = !empty($field['signed']);
           ?>
           <div>
             <label for="<?= $fieldId ?>"><?= htmlspecialchars($field['label']) ?></label>
@@ -295,7 +297,7 @@ $values = readIniValues($INI_PATH, $SECTIONS);
                 id="<?= $fieldId ?>"
                 name="<?= $fieldId ?>"
                 value="<?= htmlspecialchars($val) ?>"
-                <?= $inputType === 'number' ? 'min="0"' : '' ?>
+                <?= $inputType === 'number' ? ($signed ? 'min="-9999"' : 'min="0"') : '' ?>
               >
             <?php endif; ?>
 
