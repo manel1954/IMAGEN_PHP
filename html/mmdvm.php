@@ -627,7 +627,7 @@ button.btn-header { font-family: var(--font-mono); }
     <div class="service-card-label dmr">▸ DMR · MMDVMHost + DMRGateway</div>
 
     <div class="toggle-row">
-      <span class="toggle-label" id="dmrToggleLabel">MMDVMHost</span>
+      <span class="toggle-label" id="dmrToggleLabel">DMR</span>
       <label class="sw dmr" id="swDMR">
         <input type="checkbox" id="chkDMR" onchange="toggleServices(this)">
         <span class="sw-track"></span>
