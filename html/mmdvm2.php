@@ -295,7 +295,7 @@ if ($action === 'ysf-transmission') {
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>MMDVM Control</title>
+<title>Panel Control</title>
 <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
 <link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Rajdhani:wght@500;700&family=Orbitron:wght@700;900&display=swap" rel="stylesheet">
 <style>
@@ -579,7 +579,7 @@ button.btn-header { font-family: var(--font-mono); }
 <body>
 <header class="ctrl-header">
 <img src="Logo_ea3eiz.png" alt="EA3EIZ" style="height:40px;width:auto;">
-<h1>MMDVM &amp; YSF Control</h1>
+<h1>PANEL SISTEMAS DIGITALES</h1>
 <span class="uptime" id="clock">--:--:--</span>
 <a href="edit_ini.php?file=displaydriver" target="_blank" class="btn-header cyan"> 📄 Config Display-Driver </a>
 <button onclick="instalarDisplay()" class="btn-header amber" id="btnInstalar"> ⚙ Instalar Display-Driver </button>
@@ -640,18 +640,18 @@ button.btn-header { font-family: var(--font-mono); }
     <div class="auto-badge" id="autoRefreshBadge" style="display:none"><div class="dot-sm"></div> auto-refresh 3s</div>
 
     <div class="service-card-btns">
-      <a href="mmdvm_config.php" target="_blank" class="ini-btn edit" style="flex:1;justify-content:center;">⚙ MMDVM Config</a>
-      <a href="dmrgateway_config.php" target="_blank" class="ini-btn edit" style="flex:1;justify-content:center;">⚙ Gateway Config</a>
+      <a href="mmdvm_config.php" target="_blank" class="ini-btn edit" style="flex:1;justify-content:center;">⚙ MMDVMHOST Config</a>
+      <a href="dmrgateway_config.php" target="_blank" class="ini-btn edit" style="flex:1;justify-content:center;">⚙ DMRGateway Config</a>
     </div>
     <div class="service-card-btns" style="margin-top:.4rem;">
-      <a href="edit_ini.php?file=mmdvm" target="_blank" class="ini-btn view" style="flex:1;justify-content:center;">📄 MMDVM.ini</a>
-      <a href="edit_ini.php?file=dmrgateway" target="_blank" class="ini-btn view" style="flex:1;justify-content:center;">📄 Gateway.ini</a>
+      <a href="edit_ini.php?file=mmdvm" target="_blank" class="ini-btn view" style="flex:1;justify-content:center;">📄 MMDVMHOST.ini</a>
+      <a href="edit_ini.php?file=dmrgateway" target="_blank" class="ini-btn view" style="flex:1;justify-content:center;">📄 DMRGateway.ini</a>
     </div>
   </div>
 
   <!-- ── C4FM card ── -->
   <div class="service-card">
-    <div class="service-card-label ysf">▸ C4FM · YSFGateway + MMDVMHost YSF</div>
+    <div class="service-card-label ysf">▸ C4FM · MMDVMHOST + YSFGATEWAY</div>
 
     <div class="toggle-row">
       <span class="toggle-label" id="ysfToggleLabel">C4FM</span>
