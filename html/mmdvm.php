@@ -194,43 +194,72 @@ if ($action === 'backup-configs') {
 
 // ── Restore configuraciones ──────────────────────────────────────────
 if ($action === 'restore-configs') {
-    if (!isset($_FILES['zipfile']) || $_FILES['zipfile']['error'] !== 0) {
+    // Captura cualquier warning/notice de PHP que pudiera corromper el JSON
+    ob_start();
+    error_reporting(0);
+
+    $uploadOk = isset($_FILES['zipfile']) && $_FILES['zipfile']['error'] === UPLOAD_ERR_OK;
+
+    if (!$uploadOk) {
+        $errCode = $_FILES['zipfile']['error'] ?? -1;
+        ob_end_clean();
         header('Content-Type: application/json');
-        echo json_encode(['ok' => false, 'msg' => 'No se recibió el fichero.']);
+        echo json_encode(['ok' => false, 'msg' => 'No se recibió el fichero correctamente. Código error: ' . $errCode]);
         exit;
     }
+
     $tmpZip = $_FILES['zipfile']['tmp_name'];
-    $destMap = [
-        'MMDVMHost.ini' => '/home/pi/MMDVMHost/MMDVMHost.ini',
-        'MMDVMYSF.ini' => '/home/pi/MMDVMHost/MMDVMYSF.ini',
-        'DisplayDriver.ini' => '/home/pi/Display-Driver/DisplayDriver.ini',
-        'YSFGateway.ini' => '/home/pi/YSFClients/YSFGateway/YSFGateway.ini',
-        'DMRGateway.ini' => '/home/pi/DMRGateway/DMRGateway.ini',
-    ];
-    $zip = new ZipArchive();
-    if ($zip->open($tmpZip) !== true) {
+
+    // Verifica que el fichero subido no esté vacío
+    if (!file_exists($tmpZip) || filesize($tmpZip) === 0) {
+        ob_end_clean();
         header('Content-Type: application/json');
-        echo json_encode(['ok' => false, 'msg' => 'No se pudo abrir el ZIP.']);
+        echo json_encode(['ok' => false, 'msg' => 'El fichero recibido está vacío o no existe en el servidor.']);
         exit;
     }
+
+    $destMap = [
+        'MMDVMHost.ini'     => '/home/pi/MMDVMHost/MMDVMHost.ini',
+        'MMDVMYSF.ini'      => '/home/pi/MMDVMHost/MMDVMYSF.ini',
+        'DisplayDriver.ini' => '/home/pi/Display-Driver/DisplayDriver.ini',
+        'YSFGateway.ini'    => '/home/pi/YSFClients/YSFGateway/YSFGateway.ini',
+        'DMRGateway.ini'    => '/home/pi/DMRGateway/DMRGateway.ini',
+    ];
+
+    $zip = new ZipArchive();
+    $openResult = $zip->open($tmpZip);
+
+    if ($openResult !== true) {
+        ob_end_clean();
+        header('Content-Type: application/json');
+        echo json_encode(['ok' => false, 'msg' => 'No se pudo abrir el ZIP. Código ZipArchive: ' . $openResult]);
+        exit;
+    }
+
     $restored = [];
-    $errors = [];
+    $errors   = [];
+
     for ($i = 0; $i < $zip->numFiles; $i++) {
         $name = basename($zip->getNameIndex($i));
         if (isset($destMap[$name])) {
             $result = file_put_contents($destMap[$name], $zip->getFromIndex($i));
             if ($result !== false) $restored[] = $name;
-            else $errors[] = $name;
+            else                   $errors[]   = $name;
         }
     }
     $zip->close();
+
+    ob_end_clean();
+
     if (empty($restored)) {
         header('Content-Type: application/json');
-        echo json_encode(['ok' => false, 'msg' => 'No se encontraron ficheros compatibles en el ZIP.']);
+        echo json_encode(['ok' => false, 'msg' => 'No se encontraron ficheros compatibles en el ZIP. ¿Es el fichero Copia_A108.zip correcto?']);
         exit;
     }
+
     $msg = 'Restaurados: ' . implode(', ', $restored);
-    if ($errors) $msg .= ' | Errores: ' . implode(', ', $errors);
+    if ($errors) $msg .= ' | Sin permisos para escribir: ' . implode(', ', $errors);
+
     header('Content-Type: application/json');
     echo json_encode(['ok' => true, 'msg' => $msg]);
     exit;
@@ -1010,7 +1039,36 @@ function closeInstalar() { document.getElementById('installModal').classList.rem
 async function confirmarInstalacion() { const btn = document.getElementById('btnInstalarOk'); const msg = document.getElementById('installMsg'); const out = document.getElementById('installOutput'); btn.disabled = true; btn.textContent = '⏳ Instalando…'; msg.className = 'restore-msg loading'; msg.style.display = 'block'; msg.textContent = '⏳ Ejecutando instalador, espera…'; out.className = 'install-output visible'; out.textContent = ''; try { const r = await fetch('?action=install-display'); const d = await r.json(); out.textContent = d.output || '(sin salida)'; out.scrollTop = out.scrollHeight; msg.className = 'restore-msg ok'; msg.textContent = '✔ Instalación completada.'; btn.textContent = '✔ Cerrar'; btn.disabled = false; btn.onclick = function() { closeInstalar(); }; } catch(e) { msg.className = 'restore-msg err'; msg.textContent = '✖ Error durante la instalación.'; btn.textContent = '▶ Confirmar instalación'; btn.disabled = false; } }
 function openRestore() { document.getElementById('restoreModal').classList.add('open'); document.getElementById('restoreFile').value = ''; const msg = document.getElementById('restoreMsg'); msg.style.display = 'none'; msg.className = 'restore-msg'; }
 function closeRestore() { document.getElementById('restoreModal').classList.remove('open'); }
-async function doRestore() { const file = document.getElementById('restoreFile').files[0]; if (!file) { alert('Selecciona un fichero ZIP primero.'); return; } const msg = document.getElementById('restoreMsg'); msg.className = 'restore-msg loading'; msg.style.display = 'block'; msg.textContent = '⏳ Restaurando…'; try { const form = new FormData(); form.append('zipfile', file); const r = await fetch('?action=restore-configs', { method: 'POST', body: form }); const d = await r.json(); msg.className = 'restore-msg ' + (d.ok ? 'ok' : 'err'); msg.textContent = (d.ok ? '✔ ' : '✖ ') + d.msg; if (d.ok) setTimeout(closeRestore, 2500); } catch(e) { msg.className = 'restore-msg err'; msg.textContent = '✖ Error en la solicitud.'; } }
+async function doRestore() {
+    const file = document.getElementById('restoreFile').files[0];
+    if (!file) { alert('Selecciona un fichero ZIP primero.'); return; }
+    const msg = document.getElementById('restoreMsg');
+    msg.className = 'restore-msg loading';
+    msg.style.display = 'block';
+    msg.textContent = '⏳ Restaurando…';
+    try {
+        const form = new FormData();
+        form.append('zipfile', file);
+        const r = await fetch('?action=restore-configs', { method: 'POST', body: form });
+        // Leemos primero como texto para detectar errores PHP antes del JSON
+        const text = await r.text();
+        let d;
+        try {
+            d = JSON.parse(text);
+        } catch(parseErr) {
+            // Si PHP devuelve algo que no es JSON, lo mostramos
+            msg.className = 'restore-msg err';
+            msg.textContent = '✖ Respuesta inesperada del servidor: ' + text.substring(0, 200);
+            return;
+        }
+        msg.className = 'restore-msg ' + (d.ok ? 'ok' : 'err');
+        msg.textContent = (d.ok ? '✔ ' : '✖ ') + d.msg;
+        if (d.ok) setTimeout(closeRestore, 2500);
+    } catch(e) {
+        msg.className = 'restore-msg err';
+        msg.textContent = '✖ Error de red: ' + e.message;
+    }
+}
 function colorize(text) { return text.split('\n').map(l => { const ll = l.toLowerCase(); if (/error|fail|abort|assert/.test(ll)) return `<span class="ln-err">${l}</span>`; if (/warn/.test(ll)) return `<span class="ln-warn">${l}</span>`; if (/connect|start|open|loaded|success/.test(ll)) return `<span class="ln-ok">${l}</span>`; return `<span class="ln-info">${l}</span>`; }).join('\n'); }
 function clearLog(id) { document.getElementById(id).innerHTML = ''; }
 async function fetchLogs() { try { const r = await fetch('?action=logs&lines=15'); const d = await r.json(); ['logGw:gateway','logMmd:mmdvm'].forEach(pair => { const [id,key] = pair.split(':'); const el = document.getElementById(id); const atBot = el.scrollHeight-el.clientHeight <= el.scrollTop+10; el.innerHTML = colorize(d[key]); if (atBot) el.scrollTop = el.scrollHeight; }); } catch(e) {} }
