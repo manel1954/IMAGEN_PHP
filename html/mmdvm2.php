@@ -351,7 +351,7 @@ button.btn-header { font-family: var(--font-mono); }
 .service-card-label.ysf { color: var(--violet); }
 /* Fondo verde cuando el servicio está ON */
 .service-card.active-dmr {
-    background: rgba(0,255,159,.06);
+    background: green;
     border-color: rgba(0,255,159,.25);
     box-shadow: 0 0 20px rgba(0,255,159,.06);
     transition: background .4s, border-color .4s, box-shadow .4s;
