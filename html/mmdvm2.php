@@ -392,9 +392,9 @@ button.btn-header { font-family: var(--font-mono); }
 .sw-track {
     position: absolute;
     inset: 0;
-    border-radius: 2px;
+    border-radius: 14px;
     background: #1a2535;
-    border: 1px solid #253a50;
+    border: 3px solid var(--amber);   /* ← cambia el 1px por esto */
     transition: background .3s, border-color .3s, box-shadow .3s;
 }
 .sw-knob {
@@ -403,11 +403,11 @@ button.btn-header { font-family: var(--font-mono); }
     left: 3px;
     width: 20px;
     height: 20px;
-    border-radius: 50%;
-    background: #3a5068;
+    /* border-radius: 50%; */
+    border-color: var(--amber);
+    background: #e95c04;
     box-shadow: 0 1px 4px rgba(0,0,0,.5);
     transition: transform .3s cubic-bezier(.4,0,.2,1), background .3s, box-shadow .3s;
-    border: 3px solid var(--amber);   /* ← añade esto */
 }
 /* DMR checked */
 .sw.dmr input:checked ~ .sw-track {
