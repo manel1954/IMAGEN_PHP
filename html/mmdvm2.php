@@ -402,7 +402,7 @@ button.btn-header { font-family: var(--font-mono); }
     left: 3px;
     width: 20px;
     height: 20px;
-    border-radius: 50%;
+    border-radius: 10px;
     background: #3a5068;
     box-shadow: 0 1px 4px rgba(0,0,0,.5);
     transition: transform .3s cubic-bezier(.4,0,.2,1), background .3s, box-shadow .3s;
@@ -645,7 +645,7 @@ button.btn-header { font-family: var(--font-mono); }
     </div>
     <div class="service-card-btns" style="margin-top:.4rem;">
       <a href="edit_ini.php?file=mmdvm" target="_blank" class="ini-btn view" style="flex:1;justify-content:center;">📄 EDITAR FICHERO MMDVMHOST.ini</a>
-      <a href="edit_ini.php?file=dmrgateway" target="_blank" class="ini-btn view" style="flex:1;justify-content:center;">📄 DMRGateway.ini</a>
+      <a href="edit_ini.php?file=dmrgateway" target="_blank" class="ini-btn view" style="flex:1;justify-content:center;">📄 EDITAR FICHERO DMRGateway.ini</a>
     </div>
   </div>
 
