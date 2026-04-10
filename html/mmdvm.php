@@ -3,24 +3,9 @@ require_once __DIR__ . '/auth.php';
 header('X-Content-Type-Options: nosniff');
 $action = $_GET['action'] ?? '';
 
-// ── Función para guardar estado de servicios ─────────────────────────
-function saveState($key, $value) {
-    $file = '/var/lib/mmdvm-state';
-    $lines = file_exists($file) ? file($file, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES) : [];
-    $found = false;
-    foreach ($lines as &$line) {
-        if (strpos($line, $key . '=') === 0) {
-            $line = $key . '=' . $value;
-            $found = true;
-        }
-    }
-    unset($line);
-    if (!$found) $lines[] = $key . '=' . $value;
-    file_put_contents($file, implode("\n", $lines) . "\n");
-}
-
 // ── System Info ──────────────────────────────────────────────────────
 if ($action === 'sysinfo') {
+    // CPU usage: diferencia de idle entre dos lecturas de /proc/stat
     $s1 = file('/proc/stat'); $cpu1 = preg_split('/\s+/', trim($s1[0]));
     usleep(300000);
     $s2 = file('/proc/stat'); $cpu2 = preg_split('/\s+/', trim($s2[0]));
@@ -29,6 +14,7 @@ if ($action === 'sysinfo') {
     $dTotal = $total2 - $total1; $dIdle = $idle2 - $idle1;
     $cpu = $dTotal > 0 ? round(100 * ($dTotal - $dIdle) / $dTotal, 1) : 0;
 
+    // RAM
     $memRaw = file('/proc/meminfo');
     $mem = [];
     foreach ($memRaw as $line) {
@@ -38,10 +24,12 @@ if ($action === 'sysinfo') {
     $ramFree  = round(($mem['MemAvailable'] ?? $mem['MemFree']) / 1048576, 2);
     $ramUsed  = round($ramTotal - $ramFree, 2);
 
+    // Disco (partición raíz)
     $diskTotal = round(disk_total_space('/') / 1073741824, 1);
     $diskFree  = round(disk_free_space('/') / 1073741824, 1);
     $diskUsed  = round($diskTotal - $diskFree, 1);
 
+    // Temperatura CPU (Raspberry Pi)
     $temp = '';
     if (file_exists('/sys/class/thermal/thermal_zone0/temp')) {
         $temp = round(intval(trim(file_get_contents('/sys/class/thermal/thermal_zone0/temp'))) / 1000, 1) . ' °C';
@@ -70,9 +58,7 @@ if ($action === 'status') {
     exit;
 }
 
-// ── DMR start ────────────────────────────────────────────────────────
 if ($action === 'start') {
-    saveState('dmr', 'on');
     shell_exec('sudo systemctl start dmrgateway 2>/dev/null');
     sleep(2);
     shell_exec('sudo systemctl start mmdvmhost 2>/dev/null');
@@ -81,9 +67,7 @@ if ($action === 'start') {
     exit;
 }
 
-// ── DMR stop ─────────────────────────────────────────────────────────
 if ($action === 'stop') {
-    saveState('dmr', 'off');
     shell_exec('sudo systemctl stop mmdvmhost 2>/dev/null');
     sleep(1);
     shell_exec('sudo systemctl stop dmrgateway 2>/dev/null');
@@ -107,9 +91,7 @@ if ($action === 'ysf-status') {
     exit;
 }
 
-// ── YSF start ────────────────────────────────────────────────────────
 if ($action === 'ysf-start') {
-    saveState('ysf', 'on');
     shell_exec('sudo systemctl start ysfgateway 2>/dev/null');
     sleep(1);
     header('Content-Type: application/json');
@@ -117,9 +99,7 @@ if ($action === 'ysf-start') {
     exit;
 }
 
-// ── YSF stop ─────────────────────────────────────────────────────────
 if ($action === 'ysf-stop') {
-    saveState('ysf', 'off');
     shell_exec('sudo systemctl stop ysfgateway 2>/dev/null');
     header('Content-Type: application/json');
     echo json_encode(['ok' => true]);
@@ -134,18 +114,14 @@ if ($action === 'mmdvmysf-status') {
     exit;
 }
 
-// ── MMDVMHost YSF start ───────────────────────────────────────────────
 if ($action === 'mmdvmysf-start') {
-    saveState('ysf', 'on');
     shell_exec('sudo systemctl start mmdvmysf 2>/dev/null');
     header('Content-Type: application/json');
     echo json_encode(['ok' => true]);
     exit;
 }
 
-// ── MMDVMHost YSF stop ────────────────────────────────────────────────
 if ($action === 'mmdvmysf-stop') {
-    saveState('ysf', 'off');
     shell_exec('sudo systemctl stop ysfgateway 2>/dev/null');
     sleep(1);
     shell_exec('sudo systemctl stop mmdvmysf 2>/dev/null');
@@ -154,7 +130,6 @@ if ($action === 'mmdvmysf-stop') {
     exit;
 }
 
-// ── MMDVMHost YSF logs ────────────────────────────────────────────────
 if ($action === 'mmdvmysf-logs') {
     $lines = intval($_GET['lines'] ?? 15);
     $log = shell_exec("sudo journalctl -u mmdvmysf -n {$lines} --no-pager --output=short 2>/dev/null");
@@ -219,69 +194,43 @@ if ($action === 'backup-configs') {
 
 // ── Restore configuraciones ──────────────────────────────────────────
 if ($action === 'restore-configs') {
-    ob_start();
-    error_reporting(0);
-
-    $uploadOk = isset($_FILES['zipfile']) && $_FILES['zipfile']['error'] === UPLOAD_ERR_OK;
-
-    if (!$uploadOk) {
-        $errCode = $_FILES['zipfile']['error'] ?? -1;
-        ob_end_clean();
+    if (!isset($_FILES['zipfile']) || $_FILES['zipfile']['error'] !== 0) {
         header('Content-Type: application/json');
-        echo json_encode(['ok' => false, 'msg' => 'No se recibió el fichero correctamente. Código error: ' . $errCode]);
+        echo json_encode(['ok' => false, 'msg' => 'No se recibió el fichero.']);
         exit;
     }
-
     $tmpZip = $_FILES['zipfile']['tmp_name'];
-
-    if (!file_exists($tmpZip) || filesize($tmpZip) === 0) {
-        ob_end_clean();
-        header('Content-Type: application/json');
-        echo json_encode(['ok' => false, 'msg' => 'El fichero recibido está vacío o no existe en el servidor.']);
-        exit;
-    }
-
     $destMap = [
-        'MMDVMHost.ini'     => '/home/pi/MMDVMHost/MMDVMHost.ini',
-        'MMDVMYSF.ini'      => '/home/pi/MMDVMHost/MMDVMYSF.ini',
+        'MMDVMHost.ini' => '/home/pi/MMDVMHost/MMDVMHost.ini',
+        'MMDVMYSF.ini' => '/home/pi/MMDVMHost/MMDVMYSF.ini',
         'DisplayDriver.ini' => '/home/pi/Display-Driver/DisplayDriver.ini',
-        'YSFGateway.ini'    => '/home/pi/YSFClients/YSFGateway/YSFGateway.ini',
-        'DMRGateway.ini'    => '/home/pi/DMRGateway/DMRGateway.ini',
+        'YSFGateway.ini' => '/home/pi/YSFClients/YSFGateway/YSFGateway.ini',
+        'DMRGateway.ini' => '/home/pi/DMRGateway/DMRGateway.ini',
     ];
-
     $zip = new ZipArchive();
-    $openResult = $zip->open($tmpZip);
-
-    if ($openResult !== true) {
-        ob_end_clean();
+    if ($zip->open($tmpZip) !== true) {
         header('Content-Type: application/json');
-        echo json_encode(['ok' => false, 'msg' => 'No se pudo abrir el ZIP. Código ZipArchive: ' . $openResult]);
+        echo json_encode(['ok' => false, 'msg' => 'No se pudo abrir el ZIP.']);
         exit;
     }
-
     $restored = [];
-    $errors   = [];
-
+    $errors = [];
     for ($i = 0; $i < $zip->numFiles; $i++) {
         $name = basename($zip->getNameIndex($i));
         if (isset($destMap[$name])) {
             $result = file_put_contents($destMap[$name], $zip->getFromIndex($i));
             if ($result !== false) $restored[] = $name;
-            else                   $errors[]   = $name;
+            else $errors[] = $name;
         }
     }
     $zip->close();
-    ob_end_clean();
-
     if (empty($restored)) {
         header('Content-Type: application/json');
-        echo json_encode(['ok' => false, 'msg' => 'No se encontraron ficheros compatibles en el ZIP. ¿Es el fichero Copia_A108.zip correcto?']);
+        echo json_encode(['ok' => false, 'msg' => 'No se encontraron ficheros compatibles en el ZIP.']);
         exit;
     }
-
     $msg = 'Restaurados: ' . implode(', ', $restored);
-    if ($errors) $msg .= ' | Sin permisos para escribir: ' . implode(', ', $errors);
-
+    if ($errors) $msg .= ' | Errores: ' . implode(', ', $errors);
     header('Content-Type: application/json');
     echo json_encode(['ok' => true, 'msg' => $msg]);
     exit;
@@ -425,22 +374,116 @@ body { background: var(--bg); color: var(--text); font-family: var(--font-ui); f
 button.btn-header { font-family: var(--font-mono); }
 .btn-header:disabled { opacity: .5; pointer-events: none; }
 .ctrl-body { padding: 2rem; max-width: 1400px; margin: 0 auto; }
-.station-card { background: linear-gradient(135deg, #111720 60%, #0d1e2a 100%); border: 1px solid var(--border); border-radius: 10px; padding: 1.2rem 2rem; display: flex; align-items: center; gap: 2.5rem; margin-bottom: 1.8rem; flex-wrap: wrap; position: relative; overflow: hidden; }
-.station-card::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 2px; background: linear-gradient(90deg, transparent, var(--cyan), var(--violet), transparent); }
-.station-card-main { display: flex; flex-direction: column; align-items: flex-start; gap: .3rem; }
-.station-callsign { font-family: var(--font-orb); font-size: 2.4rem; font-weight: 900; color: var(--cyan); letter-spacing: .08em; line-height: 1; text-shadow: 0 0 20px rgba(0,212,255,.4), 0 0 50px rgba(0,212,255,.15); }
-.station-location { font-family: var(--font-mono); font-size: .78rem; color: var(--text-dim); letter-spacing: .1em; text-transform: uppercase; margin-top: .25rem; }
-.station-name-pill { display: inline-block; margin-top: .4rem; background: linear-gradient(90deg, #1a3a5a, #1a2d4a); border: 1px solid rgba(0,212,255,.35); border-radius: 20px; padding: .35rem 1.2rem; font-family: var(--font-ui); font-weight: 700; font-size: 1rem; color: var(--cyan); letter-spacing: .1em; }
-.station-divider { width: 1px; height: 70px; background: var(--border); flex-shrink: 0; }
-.station-meta { display: flex; gap: 2rem; flex-wrap: wrap; align-items: center; flex: 1; }
-.station-meta-item { display: flex; flex-direction: column; gap: .15rem; }
-.station-meta-label { font-family: var(--font-mono); font-size: .6rem; color: var(--text-dim); letter-spacing: .15em; text-transform: uppercase; }
-.station-meta-value { font-family: var(--font-mono); font-size: .95rem; color: var(--amber); letter-spacing: .06em; font-weight: bold; }
+
+/* ── Station Info Card ──────────────────────────────────────────── */
+.station-card {
+    background: linear-gradient(135deg, #111720 60%, #0d1e2a 100%);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 1.2rem 2rem;
+    display: flex;
+    align-items: center;
+    gap: 2.5rem;
+    margin-bottom: 1.8rem;
+    flex-wrap: wrap;
+    position: relative;
+    overflow: hidden;
+}
+.station-card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 2px;
+    background: linear-gradient(90deg, transparent, var(--cyan), var(--violet), transparent);
+}
+.station-card-main {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: .3rem;
+}
+.station-callsign {
+    font-family: var(--font-orb);
+    font-size: 2.4rem;
+    font-weight: 900;
+    color: var(--cyan);
+    letter-spacing: .08em;
+    line-height: 1;
+    text-shadow: 0 0 20px rgba(0,212,255,.4), 0 0 50px rgba(0,212,255,.15);
+}
+.station-location {
+    font-family: var(--font-mono);
+    font-size: .78rem;
+    color: var(--text-dim);
+    letter-spacing: .1em;
+    text-transform: uppercase;
+    margin-top: .25rem;
+}
+.station-name-pill {
+    display: inline-block;
+    margin-top: .4rem;
+    background: linear-gradient(90deg, #1a3a5a, #1a2d4a);
+    border: 1px solid rgba(0,212,255,.35);
+    border-radius: 20px;
+    padding: .35rem 1.2rem;
+    font-family: var(--font-ui);
+    font-weight: 700;
+    font-size: 1rem;
+    color: var(--cyan);
+    letter-spacing: .1em;
+}
+.station-divider {
+    width: 1px;
+    height: 70px;
+    background: var(--border);
+    flex-shrink: 0;
+}
+.station-meta {
+    display: flex;
+    gap: 2rem;
+    flex-wrap: wrap;
+    align-items: center;
+    flex: 1;
+}
+.station-meta-item {
+    display: flex;
+    flex-direction: column;
+    gap: .15rem;
+}
+.station-meta-label {
+    font-family: var(--font-mono);
+    font-size: .6rem;
+    color: var(--text-dim);
+    letter-spacing: .15em;
+    text-transform: uppercase;
+}
+.station-meta-value {
+    font-family: var(--font-mono);
+    font-size: .95rem;
+    color: var(--amber);
+    letter-spacing: .06em;
+    font-weight: bold;
+}
 .station-meta-value.cyan { color: var(--cyan); }
 .station-meta-value.green { color: var(--green); }
 .station-meta-value.violet { color: var(--violet); }
-.station-assoc { margin-left: auto; font-family: var(--font-mono); font-size: .7rem; color: var(--text-dim); letter-spacing: .12em; text-transform: uppercase; border: 1px solid var(--border); border-radius: 4px; padding: .3rem .8rem; }
-@media (max-width: 700px) { .station-card { gap: 1.2rem; padding: 1rem; } .station-divider { display: none; } .station-assoc { margin-left: 0; } }
+.station-assoc {
+    margin-left: auto;
+    font-family: var(--font-mono);
+    font-size: .7rem;
+    color: var(--text-dim);
+    letter-spacing: .12em;
+    text-transform: uppercase;
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: .3rem .8rem;
+}
+@media (max-width: 700px) {
+    .station-card { gap: 1.2rem; padding: 1rem; }
+    .station-divider { display: none; }
+    .station-assoc { margin-left: 0; }
+}
+
 .status-bar { display: flex; gap: 2rem; margin-bottom: 1.8rem; flex-wrap: wrap; align-items: center; }
 .status-item { display: flex; align-items: center; gap: .5rem; font-family: var(--font-mono); font-size: .85rem; text-transform: uppercase; letter-spacing: .08em; }
 .dot { width: 10px; height: 10px; border-radius: 50%; background: var(--text-dim); transition: background .4s, box-shadow .4s; }
@@ -601,6 +644,7 @@ button.btn-header { font-family: var(--font-mono); }
 <h1>MMDVM &amp; YSF Control</h1>
 <span class="uptime" id="clock">--:--:--</span>
 <a href="edit_ini.php?file=displaydriver" target="_blank" class="btn-header cyan"> 📄 Config Display-Driver </a>
+<!-- <button onclick="activarDisplay()" class="btn-header green"> ▶ Activar Display Driver </button> -->
 <button onclick="instalarDisplay()" class="btn-header amber" id="btnInstalar"> ⚙ Instalar Display-Driver </button>
 <a href="?action=backup-configs" class="btn-header amber"> 💾 Backup Configs </a>
 <button onclick="openRestore()" class="btn-header cyan"> 📂 Restore Configs </button>
@@ -608,6 +652,7 @@ button.btn-header { font-family: var(--font-mono); }
 </header>
 <main class="ctrl-body">
 
+<!-- ── Tarjeta Estación EA3EIZ ──────────────────────────────────── -->
 <div class="station-card">
     <div class="station-card-main">
         <div class="station-callsign">📡 EA3EIZ</div>
@@ -616,17 +661,47 @@ button.btn-header { font-family: var(--font-mono); }
     </div>
     <div class="station-divider"></div>
     <div class="station-meta">
-        <div class="station-meta-item"><span class="station-meta-label">🪪 DMR ID</span><span class="station-meta-value">214317526</span></div>
-        <div class="station-meta-item"><span class="station-meta-label">📡 Frecuencia</span><span class="station-meta-value cyan">430.000 MHz</span></div>
-        <div class="station-meta-item"><span class="station-meta-label">📍 Locator</span><span class="station-meta-value green">JN11CK</span></div>
-        <div class="station-meta-item"><span class="station-meta-label">🌍 País</span><span class="station-meta-value violet">🇪🇸 España</span></div>
+        <div class="station-meta-item">
+            <span class="station-meta-label">🪪 DMR ID</span>
+            <span class="station-meta-value">214317526</span>
+        </div>
+        <div class="station-meta-item">
+            <span class="station-meta-label">📡 Frecuencia</span>
+            <span class="station-meta-value cyan">430.000 MHz</span>
+        </div>
+        <div class="station-meta-item">
+            <span class="station-meta-label">📍 Locator</span>
+            <span class="station-meta-value green">JN11CK</span>
+        </div>
+        <div class="station-meta-item">
+            <span class="station-meta-label">🌍 País</span>
+            <span class="station-meta-value violet">🇪🇸 España</span>
+        </div>
         <div class="station-divider" style="height:50px;"></div>
-        <div class="station-meta-item"><span class="station-meta-label">🖥️ CPU</span><span class="station-meta-value" id="siCpu" style="color:var(--green);">—</span></div>
-        <div class="station-meta-item"><span class="station-meta-label">🌡️ Temp</span><span class="station-meta-value" id="siTemp" style="color:var(--amber);">—</span></div>
-        <div class="station-meta-item"><span class="station-meta-label">💾 RAM usada</span><span class="station-meta-value" id="siRam" style="color:var(--cyan);">—</span></div>
-        <div class="station-meta-item"><span class="station-meta-label">💾 RAM libre</span><span class="station-meta-value" id="siRamFree" style="color:var(--text);">—</span></div>
-        <div class="station-meta-item"><span class="station-meta-label">💿 Disco usado</span><span class="station-meta-value" id="siDisk" style="color:var(--amber);">—</span></div>
-        <div class="station-meta-item"><span class="station-meta-label">💿 Disco libre</span><span class="station-meta-value" id="siDiskFree" style="color:var(--green);">—</span></div>
+        <div class="station-meta-item">
+            <span class="station-meta-label">🖥️ CPU</span>
+            <span class="station-meta-value" id="siCpu" style="color:var(--green);">—</span>
+        </div>
+        <div class="station-meta-item">
+            <span class="station-meta-label">🌡️ Temp</span>
+            <span class="station-meta-value" id="siTemp" style="color:var(--amber);">—</span>
+        </div>
+        <div class="station-meta-item">
+            <span class="station-meta-label">💾 RAM usada</span>
+            <span class="station-meta-value" id="siRam" style="color:var(--cyan);">—</span>
+        </div>
+        <div class="station-meta-item">
+            <span class="station-meta-label">💾 RAM libre</span>
+            <span class="station-meta-value" id="siRamFree" style="color:var(--text);">—</span>
+        </div>
+        <div class="station-meta-item">
+            <span class="station-meta-label">💿 Disco usado</span>
+            <span class="station-meta-value" id="siDisk" style="color:var(--amber);">—</span>
+        </div>
+        <div class="station-meta-item">
+            <span class="station-meta-label">💿 Disco libre</span>
+            <span class="station-meta-value" id="siDiskFree" style="color:var(--green);">—</span>
+        </div>
     </div>
     <div class="station-assoc">Associació ADER</div>
 </div>
@@ -672,12 +747,23 @@ button.btn-header { font-family: var(--font-mono); }
 <div>
 <div class="panel-label">▸ DMR Display</div>
 <div class="nextion">
-<div class="nx-topbar"><span class="nx-mode">DMR · SIMPLEX</span><span>EA3EIZ · ADER</span><span class="nx-tg" id="nxTG">—</span></div>
+<div class="nx-topbar">
+<span class="nx-mode">DMR · SIMPLEX</span>
+<span>EA3EIZ · ADER</span>
+<span class="nx-tg" id="nxTG">—</span>
+</div>
 <div class="nx-vu" id="vuLeft"></div>
 <div class="nx-vu right" id="vuRight"></div>
-<div class="nx-center" id="nxCenter"><div class="nx-clock" id="nxClock">00:00:00</div><div class="nx-date" id="nxDate">—</div></div>
+<div class="nx-center" id="nxCenter">
+<div class="nx-clock" id="nxClock">00:00:00</div>
+<div class="nx-date" id="nxDate">—</div>
+</div>
 <div class="nx-txbar" id="nxTxBar"></div>
-<div class="nx-botbar"><span class="nx-dmrid" id="nxDmrid">—</span><span>SLOT <span id="nxSlot">—</span></span><span class="nx-source" id="nxSource"></span></div>
+<div class="nx-botbar">
+<span class="nx-dmrid" id="nxDmrid">—</span>
+<span>SLOT <span id="nxSlot">—</span></span>
+<span class="nx-source" id="nxSource"></span>
+</div>
 </div>
 </div>
 <div>
@@ -690,10 +776,22 @@ button.btn-header { font-family: var(--font-mono); }
 </div>
 <!-- Logs -->
 <div class="log-grid">
-<div class="log-panel"><div class="log-panel-header"><span class="svc-name gw">▸ DMRGateway</span><button class="btn-clear" onclick="clearLog('logGw')">limpiar</button></div><div class="log-output" id="logGw">Esperando servicios…</div></div>
-<div class="log-panel"><div class="log-panel-header"><span class="svc-name">▸ MMDVMHost</span><button class="btn-clear" onclick="clearLog('logMmd')">limpiar</button></div><div class="log-output" id="logMmd">Esperando servicios…</div></div>
-<div class="log-panel"><div class="log-panel-header"><span class="svc-name ysf">▸ YSFGateway</span><button class="btn-clear" onclick="clearLog('logYsf')">limpiar</button></div><div class="log-output" id="logYsf">Esperando YSFGateway…</div></div>
-<div class="log-panel"><div class="log-panel-header"><span class="svc-name" style="color:#26c6da">▸ MMDVMHost YSF</span><button class="btn-clear" onclick="clearLog('logMmdvmYsf')">limpiar</button></div><div class="log-output" id="logMmdvmYsf">Esperando MMDVMHost YSF…</div></div>
+<div class="log-panel">
+<div class="log-panel-header"><span class="svc-name gw">▸ DMRGateway</span><button class="btn-clear" onclick="clearLog('logGw')">limpiar</button></div>
+<div class="log-output" id="logGw">Esperando servicios…</div>
+</div>
+<div class="log-panel">
+<div class="log-panel-header"><span class="svc-name">▸ MMDVMHost</span><button class="btn-clear" onclick="clearLog('logMmd')">limpiar</button></div>
+<div class="log-output" id="logMmd">Esperando servicios…</div>
+</div>
+<div class="log-panel">
+<div class="log-panel-header"><span class="svc-name ysf">▸ YSFGateway</span><button class="btn-clear" onclick="clearLog('logYsf')">limpiar</button></div>
+<div class="log-output" id="logYsf">Esperando YSFGateway…</div>
+</div>
+<div class="log-panel">
+<div class="log-panel-header"><span class="svc-name" style="color:#26c6da">▸ MMDVMHost YSF</span><button class="btn-clear" onclick="clearLog('logMmdvmYsf')">limpiar</button></div>
+<div class="log-output" id="logMmdvmYsf">Esperando MMDVMHost YSF…</div>
+</div>
 </div>
 <!-- YSF Display -->
 <div class="ysf-display-section">
@@ -702,12 +800,23 @@ button.btn-header { font-family: var(--font-mono); }
 <div>
 <div class="panel-label ysf-label">▸ C4FM Display</div>
 <div class="nextion-ysf">
-<div class="nx-topbar ysf-bar"><span class="nx-mode">C4FM · YSF</span><span style="color:#6a3a9a">EA3EIZ · ADER</span><span class="nx-dest" id="ysfDest">—</span></div>
+<div class="nx-topbar ysf-bar">
+<span class="nx-mode">C4FM · YSF</span>
+<span style="color:#6a3a9a">EA3EIZ · ADER</span>
+<span class="nx-dest" id="ysfDest">—</span>
+</div>
 <div class="nx-vu" id="ysfVuLeft"></div>
 <div class="nx-vu right" id="ysfVuRight"></div>
-<div class="nx-center" id="ysfNxCenter"><div class="nx-clock" id="ysfNxClock" style="color:#c084ff;">00:00:00</div><div class="nx-date" id="ysfNxDate" style="color:#9b59d4;">—</div></div>
+<div class="nx-center" id="ysfNxCenter">
+<div class="nx-clock" id="ysfNxClock" style="color:#c084ff;">00:00:00</div>
+<div class="nx-date" id="ysfNxDate" style="color:#9b59d4;">—</div>
+</div>
 <div class="nx-txbar" id="ysfTxBar"></div>
-<div class="nx-botbar ysf-bar"><span style="color:#5a3a8a;font-family:var(--font-mono);font-size:.65rem;" id="ysfProto">YSF</span><span style="color:#5a3a8a;font-family:var(--font-mono);font-size:.65rem;">C4FM · DIGITAL VOICE</span><span class="nx-source" id="ysfSource"></span></div>
+<div class="nx-botbar ysf-bar">
+<span style="color:#5a3a8a;font-family:var(--font-mono);font-size:.65rem;" id="ysfProto">YSF</span>
+<span style="color:#5a3a8a;font-family:var(--font-mono);font-size:.65rem;">C4FM · DIGITAL VOICE</span>
+<span class="nx-source" id="ysfSource"></span>
+</div>
 </div>
 </div>
 <div>
@@ -749,24 +858,32 @@ button.btn-header { font-family: var(--font-mono); }
 let refreshTimer = null, txTimer = null, vuTimer = null, ysfTimer = null, mmdvmYsfTimer = null, ysfTxTimer = null, ysfVuTimer = null;
 let running = false, ysfRunning = false, mmdvmYsfRunning = false, currentlyActive = false, ysfCurrentlyActive = false;
 
+// 🔽 FUNCIÓN PARA OBTENER BANDERA POR CALLSIGN
 function getFlagByCall(callsign) {
     if (!callsign) return '';
     const cs = callsign.toUpperCase().trim();
     const prefixes = [
-        {re: /^EA[0-9]|EB|EC|ED|EE|EF|EG|EH/, flag:'🇪🇸'},{re: /^CT|CU|CV|CQ/, flag:'🇵🇹'},
-        {re: /^F[A-Z]|FT[0-9A-Z]|FM|FO|FH|FJ|FK|FL|FP|FR|FS/, flag:'🇫🇷'},{re: /^I[0-9]|IK|IW|IZ/, flag:'🇮🇹'},
-        {re: /^G[0-9]|M[0-9]|2E[0-9]|2[0-9]|GB|MJ|MU/, flag:'🇬🇧'},{re: /^D[ALM]|DA|DB|DC|DD|DE|DF|DG|DH|DI|DJ|DK|DL|DM|DN|DO|DP|DQ|DR/, flag:'🇩🇪'},
-        {re: /^K[0-9]|W[0-9]|N[0-9]|AA|AB|AC|AD|AE|AF/, flag:'🇺🇸'},{re: /^VE[0-9]|VA[0-9]|VO[0-9]|VY[0-9]|XJ|XK|XL|XM|XN|XO/, flag:'🇨🇦'},
-        {re: /^PY[0-9]|PU|PV|PW|PX/, flag:'🇧🇷'},{re: /^LU[0-9]|LV|LW|LX/, flag:'🇦🇷'},
+        {re: /^EA[0-9]|EB|EC|ED|EE|EF|EG|EH/, flag:'🇪🇸'},
+        {re: /^CT|CU|CV|CQ/, flag:'🇵🇹'},
+        {re: /^F[A-Z]|FT[0-9A-Z]|FM|FO|FH|FJ|FK|FL|FP|FR|FS/, flag:'🇫🇷'},
+        {re: /^I[0-9]|IK|IW|IZ/, flag:'🇮🇹'},
+        {re: /^G[0-9]|M[0-9]|2E[0-9]|2[0-9]|GB|MJ|MU/, flag:'🇬🇧'},
+        {re: /^D[ALM]|DA|DB|DC|DD|DE|DF|DG|DH|DI|DJ|DK|DL|DM|DN|DO|DP|DQ|DR/, flag:'🇩🇪'},
+        {re: /^K[0-9]|W[0-9]|N[0-9]|AA|AB|AC|AD|AE|AF/, flag:'🇺🇸'},
+        {re: /^VE[0-9]|VA[0-9]|VO[0-9]|VY[0-9]|XJ|XK|XL|XM|XN|XO/, flag:'🇨🇦'},
+        {re: /^PY[0-9]|PU|PV|PW|PX/, flag:'🇧🇷'},
+        {re: /^LU[0-9]|LV|LW|LX/, flag:'🇦🇷'},
         {re: /^JA[0-9]|JB|JC|JD|JE|JF|JG|JH|JI|JJ|JK|JL|JM|JN|JO|JP|JQ|JR|JS|JT|JU|JV|JW|JX|JY|JZ/, flag:'🇯🇵'},
-        {re: /^VK[0-9]|VL|VM|VN|VO|VP|VQ|VR|VS|VT|VU|VV|VW|VX|VY|VZ/, flag:'🇦🇺'},{re: /^ZS[0-9]|ZT|ZU|ZV|ZW|ZX|ZY|ZZ/, flag:'🇿🇦'},
+        {re: /^VK[0-9]|VL|VM|VN|VO|VP|VQ|VR|VS|VT|VU|VV|VW|VX|VY|VZ/, flag:'🇦🇺'},
+        {re: /^ZS[0-9]|ZT|ZU|ZV|ZW|ZX|ZY|ZZ/, flag:'🇿🇦'},
         {re: /^OH[0-9]|OG|OI|OJ|OK|OL|OM|ON|OO|OP|OQ|OR|OS|OT|OU|OV|OW|OX|OY|OZ/, flag:'🇫🇮'},
         {re: /^PA[0-9]|PB|PC|PD|PE|PF|PG|PH|PI|PJ|PK|PL|PM|PN|PO|PP|PQ|PR|PS|PT|PU|PV|PW|PX|PY|PZ/, flag:'🇳🇱'},
         {re: /^HB[0-9]|HB9|HE|HF|HG|HH|HI|HJ|HK|HL|HM|HN|HO|HP|HQ|HR|HS|HT|HU|HV|HW|HX|HY|HZ/, flag:'🇨🇭'},
         {re: /^OE[0-9]|OF|OG|OH|OI|OJ|OK|OL|OM|ON|OO|OP|OQ|OR|OS|OT|OU|OV|OW|OX|OY|OZ/, flag:'🇦🇹'},
         {re: /^SP[0-9]|SQ|SR|SS|ST|SU|SV|SW|SX|SY|SZ/, flag:'🇵🇱'},
         {re: /^UA[0-9]|UB|UC|UD|UE|UF|UG|UH|UI|UJ|UK|UL|UM|UN|UO|UP|UQ|UR|US|UT|UU|UV|UW|UX|UY|UZ/, flag:'🇷🇺'},
-        {re: /^SV[0-9]|SW|SX|SY|SZ/, flag:'🇬🇷'},{re: /^LY[0-9]|LZ/, flag:'🇱🇹'},
+        {re: /^SV[0-9]|SW|SX|SY|SZ/, flag:'🇬🇷'},
+        {re: /^LY[0-9]|LZ/, flag:'🇱🇹'},
         {re: /^9A[0-9]|9B|9C|9D|9E|9F|9G|9H|9I|9J|9K|9L|9M|9N|9O|9P|9Q|9R|9S|9T|9U|9V|9W|9X|9Y|9Z/, flag:'🇭🇷'},
     ];
     for (const p of prefixes) { if (p.re.test(cs)) return p.flag; }
@@ -815,6 +932,7 @@ function showIdle() {
     document.getElementById('nxCenter').innerHTML = '<div class="nx-clock" id="nxClock">00:00:00</div><div class="nx-date" id="nxDate">—</div>';
     updateClock();
 }
+
 function showActive(d) {
     currentlyActive = true; animateVU(true, 'dmr');
     document.getElementById('nxTxBar').classList.add('active');
@@ -828,6 +946,7 @@ function showActive(d) {
     const flag = getFlagByCall(d.callsign);
     document.getElementById('nxCenter').innerHTML = `<div class="nx-callsign">${flag} ${esc(d.callsign)}</div>` + (d.name ? `<div class="nx-name">${esc(d.name)}</div>` : '');
 }
+
 function showYSFIdle() {
     ysfCurrentlyActive = false; animateVU(false, 'ysf');
     document.getElementById('ysfTxBar').className = 'nx-txbar';
@@ -837,6 +956,7 @@ function showYSFIdle() {
     document.getElementById('ysfNxCenter').innerHTML = '<div class="nx-clock" id="ysfNxClock" style="color:#c084ff;">00:00:00</div><div class="nx-date" id="ysfNxDate" style="color:#9b59d4;">—</div>';
     updateClock();
 }
+
 function showYSFActive(d) {
     ysfCurrentlyActive = true; animateVU(true, 'ysf');
     document.getElementById('ysfTxBar').className = 'nx-txbar active-ysf';
@@ -848,6 +968,7 @@ function showYSFActive(d) {
     const flag = getFlagByCall(d.callsign);
     document.getElementById('ysfNxCenter').innerHTML = `<div class="nx-callsign ysf">${flag} ${esc(d.callsign)}</div>` + (d.name ? `<div class="nx-name ysf">${esc(d.name)}</div>` : '');
 }
+
 function renderLastHeard(list, activeCall) {
     const body = document.getElementById('lhBody');
     if (!list || list.length === 0) { body.innerHTML = '<div class="lh-empty">Sin actividad reciente</div>'; return; }
@@ -859,6 +980,7 @@ function renderLastHeard(list, activeCall) {
         return `<div class="lh-row${isActive?' lh-active':''}"><div class="lh-call-wrap">${dot}<span class="lh-call">${flag} ${esc(r.callsign)}</span></div><span class="lh-name">${esc(r.name||'—')}</span><span class="lh-tg">${esc(r.tg||'—')}</span><span class="lh-time">${esc(r.time||'—')}</span><span class="lh-src ${srcCls}">${srcLbl}</span></div>`;
     }).join('');
 }
+
 function renderYSFLastHeard(list, activeCall) {
     const body = document.getElementById('ysfLhBody');
     if (!list || list.length === 0) { body.innerHTML = '<div class="lh-empty">Sin actividad C4FM</div>'; return; }
@@ -882,32 +1004,13 @@ function refreshYSFButton() { const on = ysfRunning || mmdvmYsfRunning; document
 async function toggleServices() { const btn = document.getElementById('btnToggle'); const wasOpen = running; btn.classList.add('busy'); document.getElementById('btnLabel').textContent = wasOpen?'Deteniendo…':'Iniciando…'; try { await fetch(wasOpen?'?action=stop':'?action=start'); await new Promise(r => setTimeout(r,2200)); await checkStatus(); if (wasOpen) { stopRefresh(); clearLog('logGw'); clearLog('logMmd'); showIdle(); document.getElementById('lhBody').innerHTML='<div class="lh-empty">Sin actividad reciente</div>'; } else startRefresh(); } finally { btn.classList.remove('busy'); } }
 async function toggleYSF() { const btn = document.getElementById('btnYSF'); const wasOpen = ysfRunning || mmdvmYsfRunning; btn.classList.add('busy'); document.getElementById('btnYSFLabel').textContent = wasOpen?'Deteniendo…':'Iniciando…'; try { if (wasOpen) { await fetch('?action=ysf-stop'); await new Promise(r => setTimeout(r,1000)); await fetch('?action=mmdvmysf-stop'); await new Promise(r => setTimeout(r,2000)); clearLog('logYsf'); clearLog('logMmdvmYsf'); stopYSFLogs(); stopMMDVMYSFLogs(); showYSFIdle(); document.getElementById('ysfLhBody').innerHTML='<div class="lh-empty">Sin actividad C4FM</div>'; } else { await fetch('?action=mmdvmysf-start'); await new Promise(r => setTimeout(r,2000)); await fetch('?action=ysf-start'); await new Promise(r => setTimeout(r,1500)); startYSFLogs(); startMMDVMYSFLogs(); } await checkYSFStatus(); await checkMMDVMYSFStatus(); } finally { btn.classList.remove('busy'); } }
 async function rebootPi() { if (!confirm('¿Seguro que quieres reiniciar la Raspberry Pi?')) return; const btn = document.getElementById('btnReboot'); btn.textContent = '⏻ Reiniciando…'; btn.disabled = true; await fetch('?action=reboot'); }
+async function activarDisplay() { if (!confirm('¿Activar el servicio Display Driver?')) return; await fetch('?action=display-restart'); alert('✔ Display Driver activado correctamente.'); }
 function instalarDisplay() { document.getElementById('installModal').classList.add('open'); document.getElementById('installOutput').className = 'install-output'; document.getElementById('installOutput').textContent = ''; document.getElementById('installMsg').style.display = 'none'; document.getElementById('installMsg').className = 'restore-msg'; document.getElementById('btnInstalarOk').disabled = false; document.getElementById('btnInstalarOk').textContent = '▶ Confirmar instalación'; }
 function closeInstalar() { document.getElementById('installModal').classList.remove('open'); }
 async function confirmarInstalacion() { const btn = document.getElementById('btnInstalarOk'); const msg = document.getElementById('installMsg'); const out = document.getElementById('installOutput'); btn.disabled = true; btn.textContent = '⏳ Instalando…'; msg.className = 'restore-msg loading'; msg.style.display = 'block'; msg.textContent = '⏳ Ejecutando instalador, espera…'; out.className = 'install-output visible'; out.textContent = ''; try { const r = await fetch('?action=install-display'); const d = await r.json(); out.textContent = d.output || '(sin salida)'; out.scrollTop = out.scrollHeight; msg.className = 'restore-msg ok'; msg.textContent = '✔ Instalación completada.'; btn.textContent = '✔ Cerrar'; btn.disabled = false; btn.onclick = function() { closeInstalar(); }; } catch(e) { msg.className = 'restore-msg err'; msg.textContent = '✖ Error durante la instalación.'; btn.textContent = '▶ Confirmar instalación'; btn.disabled = false; } }
 function openRestore() { document.getElementById('restoreModal').classList.add('open'); document.getElementById('restoreFile').value = ''; const msg = document.getElementById('restoreMsg'); msg.style.display = 'none'; msg.className = 'restore-msg'; }
 function closeRestore() { document.getElementById('restoreModal').classList.remove('open'); }
-async function doRestore() {
-    const file = document.getElementById('restoreFile').files[0];
-    if (!file) { alert('Selecciona un fichero ZIP primero.'); return; }
-    const msg = document.getElementById('restoreMsg');
-    msg.className = 'restore-msg loading'; msg.style.display = 'block'; msg.textContent = '⏳ Restaurando…';
-    try {
-        const form = new FormData();
-        form.append('zipfile', file);
-        const r = await fetch('?action=restore-configs', { method: 'POST', body: form });
-        const text = await r.text();
-        let d;
-        try { d = JSON.parse(text); } catch(parseErr) {
-            msg.className = 'restore-msg err';
-            msg.textContent = '✖ Respuesta inesperada del servidor: ' + text.substring(0, 200);
-            return;
-        }
-        msg.className = 'restore-msg ' + (d.ok ? 'ok' : 'err');
-        msg.textContent = (d.ok ? '✔ ' : '✖ ') + d.msg;
-        if (d.ok) setTimeout(closeRestore, 2500);
-    } catch(e) { msg.className = 'restore-msg err'; msg.textContent = '✖ Error de red: ' + e.message; }
-}
+async function doRestore() { const file = document.getElementById('restoreFile').files[0]; if (!file) { alert('Selecciona un fichero ZIP primero.'); return; } const msg = document.getElementById('restoreMsg'); msg.className = 'restore-msg loading'; msg.style.display = 'block'; msg.textContent = '⏳ Restaurando…'; try { const form = new FormData(); form.append('zipfile', file); const r = await fetch('?action=restore-configs', { method: 'POST', body: form }); const d = await r.json(); msg.className = 'restore-msg ' + (d.ok ? 'ok' : 'err'); msg.textContent = (d.ok ? '✔ ' : '✖ ') + d.msg; if (d.ok) setTimeout(closeRestore, 2500); } catch(e) { msg.className = 'restore-msg err'; msg.textContent = '✖ Error en la solicitud.'; } }
 function colorize(text) { return text.split('\n').map(l => { const ll = l.toLowerCase(); if (/error|fail|abort|assert/.test(ll)) return `<span class="ln-err">${l}</span>`; if (/warn/.test(ll)) return `<span class="ln-warn">${l}</span>`; if (/connect|start|open|loaded|success/.test(ll)) return `<span class="ln-ok">${l}</span>`; return `<span class="ln-info">${l}</span>`; }).join('\n'); }
 function clearLog(id) { document.getElementById(id).innerHTML = ''; }
 async function fetchLogs() { try { const r = await fetch('?action=logs&lines=15'); const d = await r.json(); ['logGw:gateway','logMmd:mmdvm'].forEach(pair => { const [id,key] = pair.split(':'); const el = document.getElementById(id); const atBot = el.scrollHeight-el.clientHeight <= el.scrollTop+10; el.innerHTML = colorize(d[key]); if (atBot) el.scrollTop = el.scrollHeight; }); } catch(e) {} }
@@ -921,20 +1024,31 @@ function startMMDVMYSFLogs() { fetchMMDVMYSFLogs(); mmdvmYsfTimer = setInterval(
 function stopMMDVMYSFLogs() { clearInterval(mmdvmYsfTimer); mmdvmYsfTimer = null; }
 function startYSFTransmissionPoll() { fetchYSFTransmission(); ysfTxTimer = setInterval(fetchYSFTransmission, 4000); }
 function stopYSFTransmissionPoll() { clearInterval(ysfTxTimer); ysfTxTimer = null; }
+
+// ── System Info polling ───────────────────────────────────────────────
 async function fetchSysInfo() {
     try {
-        const r = await fetch('?action=sysinfo'); const d = await r.json();
-        const cpuEl = document.getElementById('siCpu'); cpuEl.textContent = d.cpu + ' %';
+        const r = await fetch('?action=sysinfo');
+        const d = await r.json();
+        // CPU con color dinámico
+        const cpuEl = document.getElementById('siCpu');
+        cpuEl.textContent = d.cpu + ' %';
         cpuEl.style.color = d.cpu > 80 ? 'var(--red)' : d.cpu > 50 ? 'var(--amber)' : 'var(--green)';
-        const tempEl = document.getElementById('siTemp'); tempEl.textContent = d.temp || '—';
-        const t = parseFloat(d.temp); tempEl.style.color = t > 75 ? 'var(--red)' : t > 60 ? 'var(--amber)' : 'var(--green)';
-        document.getElementById('siRam').textContent = d.ramUsed + ' GB / ' + d.ramTotal + ' GB';
-        document.getElementById('siRamFree').textContent = d.ramFree + ' GB';
-        document.getElementById('siDisk').textContent = d.diskUsed + ' GB / ' + d.diskTotal + ' GB';
+        // Temp con color dinámico
+        const tempEl = document.getElementById('siTemp');
+        tempEl.textContent = d.temp || '—';
+        const t = parseFloat(d.temp);
+        tempEl.style.color = t > 75 ? 'var(--red)' : t > 60 ? 'var(--amber)' : 'var(--green)';
+        // RAM
+        document.getElementById('siRam').textContent     = d.ramUsed  + ' GB / ' + d.ramTotal + ' GB';
+        document.getElementById('siRamFree').textContent = d.ramFree  + ' GB';
+        // Disco
+        document.getElementById('siDisk').textContent     = d.diskUsed + ' GB / ' + d.diskTotal + ' GB';
         document.getElementById('siDiskFree').textContent = d.diskFree + ' GB';
     } catch(e) {}
 }
-fetchSysInfo(); setInterval(fetchSysInfo, 8000);
+fetchSysInfo();
+setInterval(fetchSysInfo, 8000);
 (async () => { await checkStatus(); await checkYSFStatus(); await checkMMDVMYSFStatus(); setInterval(checkStatus,10000); setInterval(checkYSFStatus,8000); setInterval(checkMMDVMYSFStatus,8000); if (running) startRefresh(); else { showIdle(); fetchTransmission(); } showYSFIdle(); startYSFLogs(); startMMDVMYSFLogs(); startYSFTransmissionPoll(); })();
 </script>
 </body>
