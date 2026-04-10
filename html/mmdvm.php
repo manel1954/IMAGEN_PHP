@@ -919,31 +919,6 @@ function getFlagByCall(callsign) {
     return '🌐';
 }
 
-
-// ── Station card desde MMDVMHost.ini ────────────────────────────────
-async function fetchStationInfo() {
-    try {
-        const r = await fetch('?action=station-info');
-        const d = await r.json();
-        document.getElementById('scCallsign').textContent = '📡 ' + d.callsign;
-        const loc = (d.location || 'Barcelona').toUpperCase();
-        document.getElementById('scLocation').textContent = loc + ' · CATALUÑA · ' + d.locator;
-        document.getElementById('scPill').textContent     = 'Manel — ' + d.callsign;
-        document.getElementById('scDmrId').textContent    = d.dmrid;
-        document.getElementById('scFreq').textContent     = d.freq;
-        document.getElementById('scLocator').textContent  = d.locator;
-        // Actualizar label en los displays Nextion
-        const label = d.callsign + ' · ADER';
-        const nx = document.getElementById('nxStationLabel');   if(nx) nx.textContent = label;
-        const yx = document.getElementById('ysfStationLabel');  if(yx) yx.textContent = label;
-    } catch(e) { console.warn('station-info error:', e); }
-}
-
-
-
-
-
-
 function buildVU(id) { const el = document.getElementById(id); for (let i = 0; i < 18; i++) { const d = document.createElement('div'); d.className = 'nx-vu-bar'; d.id = `${id}-${i}`; el.appendChild(d); } }
 buildVU('vuLeft'); buildVU('vuRight'); buildVU('ysfVuLeft'); buildVU('ysfVuRight');
 
