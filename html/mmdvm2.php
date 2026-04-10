@@ -350,116 +350,26 @@ button.btn-header { font-family: var(--font-mono); }
 .service-card-label.dmr { color: var(--amber); }
 .service-card-label.ysf { color: var(--violet); }
 
-
 /* ── Toggle switch ────────────────────────────────────────────── */
-.toggle-row {
-    display: flex;
-    align-items: center;
-    gap: 1rem;
-    padding: .5rem 0;
-}
-.toggle-label {
-    font-family: var(--font-mono);
-    font-size: .85rem;
-    letter-spacing: .06em;
-    color: var(--text-dim);
-    text-transform: uppercase;
-    flex: 1;
-    transition: color .3s;
-}
+.toggle-row { display: flex; align-items: center; gap: 1rem; padding: .5rem 0; }
+.toggle-label { font-family: var(--font-mono); font-size: .85rem; letter-spacing: .06em; color: var(--text-dim); text-transform: uppercase; flex: 1; transition: color .3s; }
 .toggle-label.on-dmr  { color: var(--amber); }
 .toggle-label.on-ysf  { color: var(--violet); }
-.toggle-status {
-    font-family: var(--font-mono);
-    font-size: .72rem;
-    letter-spacing: .1em;
-    color: var(--text-dim);
-    min-width: 3rem;
-    text-align: right;
-    transition: color .3s;
-}
+.toggle-status { font-family: var(--font-mono); font-size: .72rem; letter-spacing: .1em; color: var(--text-dim); min-width: 3rem; text-align: right; transition: color .3s; }
 .toggle-status.on { color: var(--green); }
 
-/* El switch en sí */
-.sw {
-    position: relative;
-    width: 56px;
-    height: 28px;
-    flex-shrink: 0;
-    cursor: pointer;
-}
+.sw { position: relative; width: 56px; height: 28px; flex-shrink: 0; cursor: pointer; }
 .sw input { opacity: 0; width: 0; height: 0; position: absolute; }
-.sw-track {
-    position: absolute;
-    inset: 0;
-    border-radius: 2px;
-    background: #1a2535;
-    border: 2px solid #999999;   /* ← cambia el 1px por esto */
-    transition: background .3s, border-color .3s, box-shadow .3s;
-}
-.sw-knob {
-    position: absolute;
-    top: 3px;
-    left: 3px;
-    width: 20px;
-    height: 20px;
-    /* border-radius: 50%; */
-    border-color: var(--amber);
-    background: #e95c04;
-    box-shadow: 0 1px 4px rgba(0,0,0,.5);
-    transition: transform .3s cubic-bezier(.4,0,.2,1), background .3s, box-shadow .3s;
-}
+.sw-track { position: absolute; inset: 0; border-radius: 2px; background: #1a2535; border: 2px solid #999999; transition: background .3s, border-color .3s, box-shadow .3s; }
+.sw-knob { position: absolute; top: 3px; left: 3px; width: 20px; height: 20px; background: #e95c04; box-shadow: 0 1px 4px rgba(0,0,0,.5); transition: transform .3s cubic-bezier(.4,0,.2,1), background .3s, box-shadow .3s; }
 
+.sw.dmr input:checked ~ .sw-track { border-radius: 2px; background: #1a2535; border: 2px solid #999999; }
+.sw.dmr input:checked ~ .sw-knob { transform: translateX(28px); background: var(--green); box-shadow: 0 0 8px rgba(0,255,159,.6); }
+.sw.ysf input:checked ~ .sw-track { border-radius: 2px; background: #1a2535; border: 2px solid #999999; }
+.sw.ysf input:checked ~ .sw-knob { transform: translateX(28px); background: var(--green); box-shadow: 0 0 8px rgba(0,255,159,.6); }
 
-
-/* DMR checked */
-.sw.dmr input:checked ~ .sw-track {
-    border-radius: 2px;
-    background: #1a2535;
-    border: 2px solid #999999;   /* ← cambia el 1px por esto */
-    transition: background .3s, border-color .3s, box-shadow .3s;
-}
-
-
-
-/* DMR checked */
-.sw.dmr input:checked ~ .sw-knob {
-    transform: translateX(28px);
-    background: var(--green);          /* ← antes: var(--amber) */
-    box-shadow: 0 0 8px rgba(0,255,159,.6);  /* ← antes: amber */
-}
-
-
-
-/* YSF checked */
-.sw.ysf input:checked ~ .sw-track {
-    border-radius: 2px;
-    background: #1a2535;
-    border: 2px solid #999999;   /* ← cambia el 1px por esto */
-    transition: background .3s, border-color .3s, box-shadow .3s;
-}
-
-
-
-/* YSF checked */
-.sw.ysf input:checked ~ .sw-knob {
-    transform: translateX(28px);
-    background: var(--green);          /* ← antes: var(--violet) */
-    box-shadow: 0 0 8px rgba(0,255,159,.6);  /* ← antes: violet */
-}
-/* Busy state */
 .sw.busy { opacity: .5; pointer-events: none; }
-.sw-busy-dot {
-    display: none;
-    position: absolute;
-    top: 50%; right: -18px;
-    transform: translateY(-50%);
-    width: 8px; height: 8px;
-    border-radius: 50%;
-    border: 2px solid var(--amber);
-    border-top-color: transparent;
-    animation: spin .7s linear infinite;
-}
+.sw-busy-dot { display: none; position: absolute; top: 50%; right: -18px; transform: translateY(-50%); width: 8px; height: 8px; border-radius: 50%; border: 2px solid var(--amber); border-top-color: transparent; animation: spin .7s linear infinite; }
 .sw.busy .sw-busy-dot { display: block; }
 @keyframes spin { to { transform: translateY(-50%) rotate(360deg); } }
 
@@ -478,11 +388,12 @@ button.btn-header { font-family: var(--font-mono); }
 .ini-btn.view.ysf { color: #c9a0ff; border-color: rgba(181,122,255,.2); }
 .ini-btn.view.ysf:hover { border-color: var(--violet); background: rgba(181,122,255,.06); }
 
-/* ── Display + Last Heard ─────────────────────────────────────── */
+/* ── Display rows ─────────────────────────────────────────────── */
 .display-row { display: grid; grid-template-columns: 1fr 1fr; gap: 1.2rem; margin: 2rem 0; align-items: start; }
 @media (max-width:900px) { .display-row { grid-template-columns: 1fr; } }
 .panel-label { font-family: var(--font-mono); font-size: .7rem; letter-spacing: .15em; color: var(--amber); text-transform: uppercase; margin-bottom: .5rem; }
 .panel-label.ysf-label { color: var(--violet); }
+
 .nextion { background: #060c10; border: 2px solid #1a3a4a; border-radius: 6px; box-shadow: 0 0 0 1px #0d2030, inset 0 0 40px rgba(0,212,255,.04), 0 0 30px rgba(0,212,255,.08); position: relative; overflow: hidden; height: 210px; display: flex; align-items: center; justify-content: center; }
 .nextion::before,.nextion::after { content: '◈'; position: absolute; font-size: .6rem; color: #1a3a4a; }
 .nextion::before { top: .5rem; left: .7rem; }
@@ -491,6 +402,7 @@ button.btn-header { font-family: var(--font-mono); }
 .nextion-ysf::before,.nextion-ysf::after { content: '◈'; position: absolute; font-size: .6rem; color: #2d1a4a; }
 .nextion-ysf::before { top: .5rem; left: .7rem; }
 .nextion-ysf::after { bottom: .5rem; right: .7rem; }
+
 .nx-topbar { position: absolute; top: 0; left: 0; right: 0; height: 30px; background: #1c1c24; border-bottom: 1px solid #1a3a4a; display: flex; align-items: center; justify-content: space-between; padding: 0 1rem; font-family: var(--font-mono); font-size: .65rem; color: #2a5a7a; letter-spacing: .1em; }
 .nx-topbar.ysf-bar { background: #1a1424; border-bottom: 1px solid #2d1a4a; color: #4a2a7a; }
 .nx-topbar .nx-mode { color: var(--cyan); opacity: .7; }
@@ -523,6 +435,8 @@ button.btn-header { font-family: var(--font-mono); }
 .nx-name { font-family: var(--font-ui); font-weight: 500; font-size: 1.2rem; color: var(--cyan); letter-spacing: .18em; text-transform: uppercase; opacity: .9; margin-top: .15rem; }
 .nx-name.ysf { color: #d4a8ff; }
 @keyframes glow-in { from{opacity:0;transform:scale(.96)} to{opacity:1;transform:scale(1)} }
+
+/* ── Last Heard ───────────────────────────────────────────────── */
 .lh-panel { background: var(--surface); border: 3px solid #1a3a4a; border-radius: 6px; display: flex; flex-direction: column; }
 .lh-header { background: #1c1c24; border-bottom: 1px solid var(--border); padding: .4rem 1rem; display: grid; grid-template-columns: 1.1fr 1.5fr .7fr .7fr .5fr; gap: .3rem; font-family: var(--font-mono); font-size: .6rem; color: var(--text-dim); letter-spacing: .1em; text-transform: uppercase; }
 .lh-body { flex: 1; overflow-y: auto; }
@@ -552,6 +466,8 @@ button.btn-header { font-family: var(--font-mono); }
 .lh-call-ysf { font-family: var(--font-mono); font-size: .82rem; color: var(--violet); letter-spacing: .05em; font-weight: bold; }
 .lh-src-ysf.rf { color: var(--green); font-family: var(--font-mono); font-size: .6rem; }
 .lh-src-ysf.net { color: var(--cyan); font-family: var(--font-mono); font-size: .6rem; }
+
+/* ── Logs ─────────────────────────────────────────────────────── */
 .log-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1.2rem; }
 @media (max-width:900px) { .log-grid { grid-template-columns: 1fr; } }
 .log-panel { background: var(--surface); border: 1px solid var(--border); border-radius: 4px; overflow: hidden; }
@@ -568,9 +484,6 @@ button.btn-header { font-family: var(--font-mono); }
 .ln-warn { color: var(--amber); }
 .ln-err { color: var(--red); }
 .ln-ok { color: var(--green-dim,#00cc7a); }
-.ysf-display-section { margin-top: 2rem; }
-.ysf-section-title { font-family: var(--font-mono); font-size: .7rem; letter-spacing: .2em; text-transform: uppercase; color: var(--violet); margin-bottom: 1rem; display: flex; align-items: center; gap: .8rem; }
-.ysf-section-title::after { content: ''; flex: 1; height: 1px; background: linear-gradient(90deg,rgba(181,122,255,.4),transparent); }
 
 /* ── Modals ───────────────────────────────────────────────────── */
 .restore-modal,.install-modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,.75); z-index: 9000; align-items: center; justify-content: center; }
@@ -600,7 +513,6 @@ button.btn-header { font-family: var(--font-mono); }
 <h1>PANEL SISTEMAS DIGITALES</h1>
 <span class="uptime" id="clock">--:--:--</span>
 <a href="edit_ini.php?file=displaydriver" target="_blank" class="btn-header cyan"> 📄 Config Display-Driver </a>
-<!-- <button onclick="instalarDisplay()" class="btn-header amber" id="btnInstalar"> ⚙ Instalar Display-Driver </button> -->
 <a href="?action=backup-configs" class="btn-header amber"> 💾 Backup Configs </a>
 <button onclick="openRestore()" class="btn-header cyan"> 📂 Restore Configs </button>
 <button id="btnReboot" class="btn-header red" onclick="rebootPi()">⏻ Reiniciar Pi</button>
@@ -643,7 +555,6 @@ button.btn-header { font-family: var(--font-mono); }
   <!-- ── DMR card ── -->
   <div class="service-card">
     <div class="service-card-label dmr">▸ DMR · MMDVMHost + DMRGateway</div>
-
     <div class="toggle-row">
       <span class="toggle-label" id="dmrToggleLabel">DMR</span>
       <label class="sw dmr" id="swDMR">
@@ -654,9 +565,7 @@ button.btn-header { font-family: var(--font-mono); }
       </label>
       <span class="toggle-status" id="dmrToggleStatus">OFF</span>
     </div>
-
     <div class="auto-badge" id="autoRefreshBadge" style="display:none"><div class="dot-sm"></div> auto-refresh 3s</div>
-
     <div class="service-card-btns">
       <a href="mmdvm_config.php" target="_blank" class="ini-btn edit" style="flex:1;justify-content:center;">⚙ MMDVMHOST Config</a>
       <a href="dmrgateway_config.php" target="_blank" class="ini-btn edit" style="flex:1;justify-content:center;">⚙ DMRGateway Config</a>
@@ -670,7 +579,6 @@ button.btn-header { font-family: var(--font-mono); }
   <!-- ── C4FM card ── -->
   <div class="service-card">
     <div class="service-card-label ysf">▸ C4FM · MMDVMHOST + YSFGATEWAY</div>
-
     <div class="toggle-row">
       <span class="toggle-label" id="ysfToggleLabel">C4FM</span>
       <label class="sw ysf" id="swYSF">
@@ -681,91 +589,68 @@ button.btn-header { font-family: var(--font-mono); }
       </label>
       <span class="toggle-status" id="ysfToggleStatus">OFF</span>
     </div>
-
-  <div class="auto-badge ysf" id="ysfRefreshBadge" style="display:none"><div class="dot-sm"></div> C4FM activo</div>    
-    
-    
-    
+    <div class="auto-badge ysf" id="ysfRefreshBadge" style="display:none"><div class="dot-sm"></div> C4FM activo</div>
     <div class="service-card-btns" style="margin-top:.4rem;">
-      <a href="mmdvmysf_config.php" target="_blank" class="ini-btn edit" style="flex:1;justify-content:center;color:#26c6da;border-color:rgba(38,198,218,.3);">⚙ MMDVMYSF CONFIG</a>      
+      <a href="mmdvmysf_config.php" target="_blank" class="ini-btn edit" style="flex:1;justify-content:center;color:#26c6da;border-color:rgba(38,198,218,.3);">⚙ MMDVMYSF CONFIG</a>
       <a href="ysfgateway_config.php" target="_blank" class="ini-btn edit ysf" style="flex:1;justify-content:center;">⚙ YSFGATEWAY CONFIG</a>
-     
     </div>
-
-<div class="service-card-btns">
-            <a href="edit_ini.php?file=mmdvmysf" target="_blank" class="ini-btn view" style="flex:1;justify-content:center;color:#80deea;border-color:rgba(38,198,218,.2);">📄 editar fichero MMDVMYSF.ini</a>
-        <a href="edit_ini.php?file=ysfgateway" target="_blank" class="ini-btn view ysf" style="flex:1;justify-content:center;">📄 editar fichero YSFGateway.ini</a>
-    
+    <div class="service-card-btns">
+      <a href="edit_ini.php?file=mmdvmysf" target="_blank" class="ini-btn view" style="flex:1;justify-content:center;color:#80deea;border-color:rgba(38,198,218,.2);">📄 editar fichero MMDVMYSF.ini</a>
+      <a href="edit_ini.php?file=ysfgateway" target="_blank" class="ini-btn view ysf" style="flex:1;justify-content:center;">📄 editar fichero YSFGateway.ini</a>
     </div>
-
-
   </div>
-
-
-
 </div>
 
-
-
-
-
-
-
-
-
-
-<!-- DMR Display row -->
+<!-- ── Displays lado a lado ── -->
 <div class="display-row">
-<div>
-<div class="panel-label">▸ DMR Display</div>
-<div class="nextion">
-<div class="nx-topbar"><span class="nx-mode">DMR · SIMPLEX</span><span>EA3EIZ · ADER</span><span class="nx-tg" id="nxTG">—</span></div>
-<div class="nx-vu" id="vuLeft"></div><div class="nx-vu right" id="vuRight"></div>
-<div class="nx-center" id="nxCenter"><div class="nx-clock" id="nxClock">00:00:00</div><div class="nx-date" id="nxDate">—</div></div>
-<div class="nx-txbar" id="nxTxBar"></div>
-<div class="nx-botbar"><span class="nx-dmrid" id="nxDmrid">—</span><span>SLOT <span id="nxSlot">—</span></span><span class="nx-source" id="nxSource"></span></div>
-</div>
-</div>
-<div>
-<div class="panel-label">▸ Últimos escuchados DMR</div>
-<div class="lh-panel">
-<div class="lh-header"><span>Indicativo</span><span>Nombre</span><span>TG</span><span>Hora</span><span>Src</span></div>
-<div class="lh-body" id="lhBody"><div class="lh-empty">Sin actividad reciente</div></div>
-</div>
-</div>
+  <div>
+    <div class="panel-label">▸ DMR Display</div>
+    <div class="nextion">
+      <div class="nx-topbar"><span class="nx-mode">DMR · SIMPLEX</span><span>EA3EIZ · ADER</span><span class="nx-tg" id="nxTG">—</span></div>
+      <div class="nx-vu" id="vuLeft"></div><div class="nx-vu right" id="vuRight"></div>
+      <div class="nx-center" id="nxCenter"><div class="nx-clock" id="nxClock">00:00:00</div><div class="nx-date" id="nxDate">—</div></div>
+      <div class="nx-txbar" id="nxTxBar"></div>
+      <div class="nx-botbar"><span class="nx-dmrid" id="nxDmrid">—</span><span>SLOT <span id="nxSlot">—</span></span><span class="nx-source" id="nxSource"></span></div>
+    </div>
+  </div>
+  <div>
+    <div class="panel-label ysf-label">▸ C4FM Display</div>
+    <div class="nextion-ysf">
+      <div class="nx-topbar ysf-bar"><span class="nx-mode">C4FM · YSF</span><span style="color:#6a3a9a">EA3EIZ · ADER</span><span class="nx-dest" id="ysfDest">—</span></div>
+      <div class="nx-vu" id="ysfVuLeft"></div><div class="nx-vu right" id="ysfVuRight"></div>
+      <div class="nx-center" id="ysfNxCenter"><div class="nx-clock" id="ysfNxClock" style="color:#c084ff;">00:00:00</div><div class="nx-date" id="ysfNxDate" style="color:#9b59d4;">—</div></div>
+      <div class="nx-txbar" id="ysfTxBar"></div>
+      <div class="nx-botbar ysf-bar"><span style="color:#5a3a8a;font-family:var(--font-mono);font-size:.65rem;" id="ysfProto">YSF</span><span style="color:#5a3a8a;font-family:var(--font-mono);font-size:.65rem;">C4FM · DIGITAL VOICE</span><span class="nx-source" id="ysfSource"></span></div>
+    </div>
+  </div>
 </div>
 
-<!-- Logs -->
-<div class="log-grid">
+<!-- ── Últimos escuchados lado a lado ── -->
+<div class="display-row" style="margin-top:1rem;">
+  <div>
+    <div class="panel-label">▸ Últimos escuchados DMR</div>
+    <div class="lh-panel">
+      <div class="lh-header"><span>Indicativo</span><span>Nombre</span><span>TG</span><span>Hora</span><span>Src</span></div>
+      <div class="lh-body" id="lhBody"><div class="lh-empty">Sin actividad reciente</div></div>
+    </div>
+  </div>
+  <div>
+    <div class="panel-label ysf-label">▸ Últimos escuchados C4FM</div>
+    <div class="lh-panel-ysf">
+      <div class="lh-header-ysf"><span>Indicativo</span><span>Nombre</span><span>Hora</span><span>Src</span></div>
+      <div class="lh-body" id="ysfLhBody"><div class="lh-empty">Sin actividad C4FM</div></div>
+    </div>
+  </div>
+</div>
+
+<!-- ── Logs ── -->
+<div class="log-grid" style="margin-top:2rem;">
 <div class="log-panel"><div class="log-panel-header"><span class="svc-name gw">▸ DMRGateway</span><button class="btn-clear" onclick="clearLog('logGw')">limpiar</button></div><div class="log-output" id="logGw">Esperando servicios…</div></div>
 <div class="log-panel"><div class="log-panel-header"><span class="svc-name">▸ MMDVMHost</span><button class="btn-clear" onclick="clearLog('logMmd')">limpiar</button></div><div class="log-output" id="logMmd">Esperando servicios…</div></div>
 <div class="log-panel"><div class="log-panel-header"><span class="svc-name ysf">▸ YSFGateway</span><button class="btn-clear" onclick="clearLog('logYsf')">limpiar</button></div><div class="log-output" id="logYsf">Esperando YSFGateway…</div></div>
 <div class="log-panel"><div class="log-panel-header"><span class="svc-name" style="color:#26c6da">▸ MMDVMHost YSF</span><button class="btn-clear" onclick="clearLog('logMmdvmYsf')">limpiar</button></div><div class="log-output" id="logMmdvmYsf">Esperando MMDVMHost YSF…</div></div>
 </div>
 
-<!-- YSF Display -->
-<div class="ysf-display-section">
-<div class="ysf-section-title">▸ C4FM · YSF Monitor</div>
-<div class="display-row">
-<div>
-<div class="panel-label ysf-label">▸ C4FM Display</div>
-<div class="nextion-ysf">
-<div class="nx-topbar ysf-bar"><span class="nx-mode">C4FM · YSF</span><span style="color:#6a3a9a">EA3EIZ · ADER</span><span class="nx-dest" id="ysfDest">—</span></div>
-<div class="nx-vu" id="ysfVuLeft"></div><div class="nx-vu right" id="ysfVuRight"></div>
-<div class="nx-center" id="ysfNxCenter"><div class="nx-clock" id="ysfNxClock" style="color:#c084ff;">00:00:00</div><div class="nx-date" id="ysfNxDate" style="color:#9b59d4;">—</div></div>
-<div class="nx-txbar" id="ysfTxBar"></div>
-<div class="nx-botbar ysf-bar"><span style="color:#5a3a8a;font-family:var(--font-mono);font-size:.65rem;" id="ysfProto">YSF</span><span style="color:#5a3a8a;font-family:var(--font-mono);font-size:.65rem;">C4FM · DIGITAL VOICE</span><span class="nx-source" id="ysfSource"></span></div>
-</div>
-</div>
-<div>
-<div class="panel-label ysf-label">▸ Últimos escuchados C4FM</div>
-<div class="lh-panel-ysf">
-<div class="lh-header-ysf"><span>Indicativo</span><span>Nombre</span><span>Hora</span><span>Src</span></div>
-<div class="lh-body" id="ysfLhBody"><div class="lh-empty">Sin actividad C4FM</div></div>
-</div>
-</div>
-</div>
-</div>
 </main>
 
 <!-- Modal Restore -->
@@ -814,8 +699,7 @@ function getFlagByCall(callsign) {
         {re:/^PA[0-9]|PB|PC|PD|PE|PF|PG|PH|PI|PJ|PK|PL|PM|PN|PO|PP|PQ|PR|PS|PT|PU|PV|PW|PX|PY|PZ/,flag:'🇳🇱'},
         {re:/^HB[0-9]|HB9/,flag:'🇨🇭'},{re:/^OE[0-9]/,flag:'🇦🇹'},
         {re:/^SP[0-9]|SQ|SR/,flag:'🇵🇱'},{re:/^UA[0-9]|UB|UC|UD|UE|UF|UG|UH|UI|UJ|UK|UL|UM|UN|UO|UP|UQ|UR|US|UT|UU|UV|UW|UX|UY|UZ/,flag:'🇷🇺'},
-        {re:/^SV[0-9]|SW|SX|SY|SZ/,flag:'🇬🇷'},{re:/^LY[0-9]|LZ/,flag:'🇱🇹'},
-        {re:/^9A[0-9]/,flag:'🇭🇷'},
+        {re:/^SV[0-9]|SW|SX|SY|SZ/,flag:'🇬🇷'},{re:/^LY[0-9]|LZ/,flag:'🇱🇹'},{re:/^9A[0-9]/,flag:'🇭🇷'},
     ];
     for (const p of prefixes) { if (p.re.test(cs)) return p.flag; }
     return '🌐';
@@ -845,26 +729,15 @@ setInterval(updateClock,1000);updateClock();
 
 function esc(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
 
-// ── Toggle UI helpers ─────────────────────────────────────────────────
 function setDMRToggle(on) {
-    const chk = document.getElementById('chkDMR');
-    const lbl = document.getElementById('dmrToggleLabel');
-    const sta = document.getElementById('dmrToggleStatus');
-    chk.checked = on;
-    lbl.className = 'toggle-label' + (on ? ' on-dmr' : '');
-    sta.className  = 'toggle-status' + (on ? ' on' : '');
-    sta.textContent = on ? 'ON' : 'OFF';
-    document.getElementById('autoRefreshBadge').style.display = on ? 'flex' : 'none';
+    const chk=document.getElementById('chkDMR'),lbl=document.getElementById('dmrToggleLabel'),sta=document.getElementById('dmrToggleStatus');
+    chk.checked=on; lbl.className='toggle-label'+(on?' on-dmr':''); sta.className='toggle-status'+(on?' on':''); sta.textContent=on?'ON':'OFF';
+    document.getElementById('autoRefreshBadge').style.display=on?'flex':'none';
 }
 function setYSFToggle(on) {
-    const chk = document.getElementById('chkYSF');
-    const lbl = document.getElementById('ysfToggleLabel');
-    const sta = document.getElementById('ysfToggleStatus');
-    chk.checked = on;
-    lbl.className = 'toggle-label' + (on ? ' on-ysf' : '');
-    sta.className  = 'toggle-status' + (on ? ' on' : '');
-    sta.textContent = on ? 'ON' : 'OFF';
-    document.getElementById('ysfRefreshBadge').style.display = on ? 'flex' : 'none';
+    const chk=document.getElementById('chkYSF'),lbl=document.getElementById('ysfToggleLabel'),sta=document.getElementById('ysfToggleStatus');
+    chk.checked=on; lbl.className='toggle-label'+(on?' on-ysf':''); sta.className='toggle-status'+(on?' on':''); sta.textContent=on?'ON':'OFF';
+    document.getElementById('ysfRefreshBadge').style.display=on?'flex':'none';
 }
 
 function showIdle(){currentlyActive=false;animateVU(false,'dmr');document.getElementById('nxTxBar').classList.remove('active');document.getElementById('nxTG').textContent='—';document.getElementById('nxSlot').textContent='—';document.getElementById('nxDmrid').textContent='—';const src=document.getElementById('nxSource');src.textContent='';src.className='nx-source';document.getElementById('nxCenter').innerHTML='<div class="nx-clock" id="nxClock">00:00:00</div><div class="nx-date" id="nxDate">—</div>';updateClock();}
@@ -879,56 +752,19 @@ async function fetchTransmission(){try{const r=await fetch('?action=transmission
 async function fetchYSFTransmission(){try{const r=await fetch('?action=ysf-transmission');const d=await r.json();if(d.active)showYSFActive(d);else showYSFIdle();renderYSFLastHeard(d.lastHeard||[],d.active?d.callsign:null);}catch(e){showYSFIdle();}}
 
 async function checkStatus(){
-    try{
-        const r=await fetch('?action=status');const d=await r.json();
-        const gw=d.gateway==='active',mmd=d.mmdvm==='active';
-        setDot('dot-gateway',gw?'active':'off');setDot('dot-mmdvm',mmd?'active':'off');setDot('dot-mosquitto',gw?'active':'off');
-        running=gw||mmd;
-        setDMRToggle(running);
-        if(running)startRefresh();
-    }catch(e){}
+    try{const r=await fetch('?action=status');const d=await r.json();const gw=d.gateway==='active',mmd=d.mmdvm==='active';setDot('dot-gateway',gw?'active':'off');setDot('dot-mmdvm',mmd?'active':'off');setDot('dot-mosquitto',gw?'active':'off');running=gw||mmd;setDMRToggle(running);if(running)startRefresh();}catch(e){}
 }
 async function checkYSFStatus(){try{const r=await fetch('?action=ysf-status');const d=await r.json();ysfRunning=d.ysf==='active';setDot('dot-ysf',ysfRunning?'active':'off');setYSFToggle(ysfRunning||mmdvmYsfRunning);}catch(e){}}
 async function checkMMDVMYSFStatus(){try{const r=await fetch('?action=mmdvmysf-status');const d=await r.json();mmdvmYsfRunning=d.mmdvmysf==='active';setDot('dot-mmdvmysf',mmdvmYsfRunning?'active':'off');setYSFToggle(ysfRunning||mmdvmYsfRunning);}catch(e){}}
-
 function setDot(id,state){document.getElementById(id).className='dot'+(state==='active'?' active':state==='error'?' error':'');}
 
-async function toggleServices(chk) {
-    const wasOn = !chk.checked; // before this change
-    const sw = document.getElementById('swDMR');
-    chk.checked = wasOn; // revert until confirmed
-    sw.classList.add('busy');
-    try {
-        await fetch(wasOn ? '?action=stop' : '?action=start');
-        await new Promise(r => setTimeout(r, 2200));
-        const r = await fetch('?action=status'); const d = await r.json();
-        const gw = d.gateway==='active', mmd = d.mmdvm==='active';
-        running = gw || mmd;
-        setDot('dot-gateway', gw?'active':'off'); setDot('dot-mmdvm', mmd?'active':'off'); setDot('dot-mosquitto', gw?'active':'off');
-        setDMRToggle(running);
-        if (wasOn) { stopRefresh(); clearLog('logGw'); clearLog('logMmd'); showIdle(); document.getElementById('lhBody').innerHTML='<div class="lh-empty">Sin actividad reciente</div>'; }
-        else startRefresh();
-    } finally { sw.classList.remove('busy'); }
+async function toggleServices(chk){
+    const wasOn=!chk.checked;const sw=document.getElementById('swDMR');chk.checked=wasOn;sw.classList.add('busy');
+    try{await fetch(wasOn?'?action=stop':'?action=start');await new Promise(r=>setTimeout(r,2200));const r=await fetch('?action=status');const d=await r.json();const gw=d.gateway==='active',mmd=d.mmdvm==='active';running=gw||mmd;setDot('dot-gateway',gw?'active':'off');setDot('dot-mmdvm',mmd?'active':'off');setDot('dot-mosquitto',gw?'active':'off');setDMRToggle(running);if(wasOn){stopRefresh();clearLog('logGw');clearLog('logMmd');showIdle();document.getElementById('lhBody').innerHTML='<div class="lh-empty">Sin actividad reciente</div>';}else startRefresh();}finally{sw.classList.remove('busy');}
 }
-
-async function toggleYSF(chk) {
-    const wasOn = !chk.checked;
-    const sw = document.getElementById('swYSF');
-    chk.checked = wasOn;
-    sw.classList.add('busy');
-    try {
-        if (wasOn) {
-            await fetch('?action=ysf-stop'); await new Promise(r=>setTimeout(r,1000));
-            await fetch('?action=mmdvmysf-stop'); await new Promise(r=>setTimeout(r,2000));
-            clearLog('logYsf'); clearLog('logMmdvmYsf'); stopYSFLogs(); stopMMDVMYSFLogs(); showYSFIdle();
-            document.getElementById('ysfLhBody').innerHTML='<div class="lh-empty">Sin actividad C4FM</div>';
-        } else {
-            await fetch('?action=mmdvmysf-start'); await new Promise(r=>setTimeout(r,2000));
-            await fetch('?action=ysf-start'); await new Promise(r=>setTimeout(r,1500));
-            startYSFLogs(); startMMDVMYSFLogs();
-        }
-        await checkYSFStatus(); await checkMMDVMYSFStatus();
-    } finally { sw.classList.remove('busy'); }
+async function toggleYSF(chk){
+    const wasOn=!chk.checked;const sw=document.getElementById('swYSF');chk.checked=wasOn;sw.classList.add('busy');
+    try{if(wasOn){await fetch('?action=ysf-stop');await new Promise(r=>setTimeout(r,1000));await fetch('?action=mmdvmysf-stop');await new Promise(r=>setTimeout(r,2000));clearLog('logYsf');clearLog('logMmdvmYsf');stopYSFLogs();stopMMDVMYSFLogs();showYSFIdle();document.getElementById('ysfLhBody').innerHTML='<div class="lh-empty">Sin actividad C4FM</div>';}else{await fetch('?action=mmdvmysf-start');await new Promise(r=>setTimeout(r,2000));await fetch('?action=ysf-start');await new Promise(r=>setTimeout(r,1500));startYSFLogs();startMMDVMYSFLogs();}await checkYSFStatus();await checkMMDVMYSFStatus();}finally{sw.classList.remove('busy');}
 }
 
 async function rebootPi(){if(!confirm('¿Seguro que quieres reiniciar la Raspberry Pi?'))return;const btn=document.getElementById('btnReboot');btn.textContent='⏻ Reiniciando…';btn.disabled=true;await fetch('?action=reboot');}
