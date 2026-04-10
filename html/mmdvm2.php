@@ -409,7 +409,7 @@ button.btn-header { font-family: var(--font-mono); }
 }
 /* DMR checked */
 .sw.dmr input:checked ~ .sw-track {
-    background: rgba(203, 153, 139, 0.18);
+    background: rgba(255, 55, 0, 0.18);
     border-color: var(--amber);
     box-shadow: 0 0 10px rgba(244, 186, 52, 0.25);
 }
