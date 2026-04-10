@@ -415,10 +415,11 @@ button.btn-header { font-family: var(--font-mono); }
     border-color: var(--amber);
     box-shadow: 0 0 10px rgba(244, 186, 52, 0.25);
 }
+/* DMR checked */
 .sw.dmr input:checked ~ .sw-knob {
     transform: translateX(28px);
-    background: var(--amber);
-    box-shadow: 0 0 8px rgba(255,179,0,.6);
+    background: var(--green);          /* ← antes: var(--amber) */
+    box-shadow: 0 0 8px rgba(0,255,159,.6);  /* ← antes: amber */
 }
 /* YSF checked */
 .sw.ysf input:checked ~ .sw-track {
