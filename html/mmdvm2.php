@@ -403,6 +403,7 @@ button.btn-header { font-family: var(--font-mono); }
     width: 20px;
     height: 20px;
     /* border-radius: 50%; */
+    border-color: var(--green);
     background: #e95c04;
     box-shadow: 0 1px 4px rgba(0,0,0,.5);
     transition: transform .3s cubic-bezier(.4,0,.2,1), background .3s, box-shadow .3s;
