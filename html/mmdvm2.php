@@ -349,6 +349,19 @@ button.btn-header { font-family: var(--font-mono); }
 .service-card-label { font-family: var(--font-mono); font-size: .7rem; letter-spacing: .15em; text-transform: uppercase; margin-bottom: 1rem; }
 .service-card-label.dmr { color: var(--amber); }
 .service-card-label.ysf { color: var(--violet); }
+/* Fondo verde cuando el servicio está ON */
+.service-card.active-dmr {
+    background: rgba(0,255,159,.06);
+    border-color: rgba(0,255,159,.25);
+    box-shadow: 0 0 20px rgba(0,255,159,.06);
+    transition: background .4s, border-color .4s, box-shadow .4s;
+}
+.service-card.active-ysf {
+    background: rgba(0,255,159,.06);
+    border-color: rgba(0,255,159,.25);
+    box-shadow: 0 0 20px rgba(0,255,159,.06);
+    transition: background .4s, border-color .4s, box-shadow .4s;
+}
 
 /* ── Toggle switch ────────────────────────────────────────────── */
 .toggle-row {
@@ -403,7 +416,7 @@ button.btn-header { font-family: var(--font-mono); }
     width: 20px;
     height: 20px;
     /* border-radius: 50%; */
-    border-color: var(--green);
+    border-color: var(--amber);
     background: #e95c04;
     box-shadow: 0 1px 4px rgba(0,0,0,.5);
     transition: transform .3s cubic-bezier(.4,0,.2,1), background .3s, box-shadow .3s;
@@ -819,7 +832,10 @@ function setDMRToggle(on) {
     sta.className  = 'toggle-status' + (on ? ' on' : '');
     sta.textContent = on ? 'ON' : 'OFF';
     document.getElementById('autoRefreshBadge').style.display = on ? 'flex' : 'none';
+    // ── nuevo ──
+    document.getElementById('swDMR').closest('.service-card').classList.toggle('active-dmr', on);
 }
+
 function setYSFToggle(on) {
     const chk = document.getElementById('chkYSF');
     const lbl = document.getElementById('ysfToggleLabel');
@@ -829,6 +845,8 @@ function setYSFToggle(on) {
     sta.className  = 'toggle-status' + (on ? ' on' : '');
     sta.textContent = on ? 'ON' : 'OFF';
     document.getElementById('ysfRefreshBadge').style.display = on ? 'flex' : 'none';
+    // ── nuevo ──
+    document.getElementById('swYSF').closest('.service-card').classList.toggle('active-ysf', on);
 }
 
 function showIdle(){currentlyActive=false;animateVU(false,'dmr');document.getElementById('nxTxBar').classList.remove('active');document.getElementById('nxTG').textContent='—';document.getElementById('nxSlot').textContent='—';document.getElementById('nxDmrid').textContent='—';const src=document.getElementById('nxSource');src.textContent='';src.className='nx-source';document.getElementById('nxCenter').innerHTML='<div class="nx-clock" id="nxClock">00:00:00</div><div class="nx-date" id="nxDate">—</div>';updateClock();}
