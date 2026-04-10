@@ -409,24 +409,38 @@ button.btn-header { font-family: var(--font-mono); }
     box-shadow: 0 1px 4px rgba(0,0,0,.5);
     transition: transform .3s cubic-bezier(.4,0,.2,1), background .3s, box-shadow .3s;
 }
+
+
+
 /* DMR checked */
 .sw.dmr input:checked ~ .sw-track {
-    background: rgba(255, 55, 0, 0.18);
-    border-color: var(--amber);
-    box-shadow: 0 0 10px rgba(244, 186, 52, 0.25);
+    border-radius: 2px;
+    background: #1a2535;
+    border: 2px solid #999999;   /* ← cambia el 1px por esto */
+    transition: background .3s, border-color .3s, box-shadow .3s;
 }
+
+
+
 /* DMR checked */
 .sw.dmr input:checked ~ .sw-knob {
     transform: translateX(28px);
     background: var(--green);          /* ← antes: var(--amber) */
     box-shadow: 0 0 8px rgba(0,255,159,.6);  /* ← antes: amber */
 }
+
+
+
 /* YSF checked */
 .sw.ysf input:checked ~ .sw-track {
-    background: rgba(181,122,255,.18);
-    border-color: var(--violet);
-    box-shadow: 0 0 10px rgba(181,122,255,.25);
+    border-radius: 2px;
+    background: #1a2535;
+    border: 2px solid #999999;   /* ← cambia el 1px por esto */
+    transition: background .3s, border-color .3s, box-shadow .3s;
 }
+
+
+
 /* YSF checked */
 .sw.ysf input:checked ~ .sw-knob {
     transform: translateX(28px);
