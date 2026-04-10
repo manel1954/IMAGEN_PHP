@@ -427,10 +427,11 @@ button.btn-header { font-family: var(--font-mono); }
     border-color: var(--violet);
     box-shadow: 0 0 10px rgba(181,122,255,.25);
 }
+/* YSF checked */
 .sw.ysf input:checked ~ .sw-knob {
     transform: translateX(28px);
-    background: var(--violet);
-    box-shadow: 0 0 8px rgba(181,122,255,.6);
+    background: var(--green);          /* ← antes: var(--violet) */
+    box-shadow: 0 0 8px rgba(0,255,159,.6);  /* ← antes: violet */
 }
 /* Busy state */
 .sw.busy { opacity: .5; pointer-events: none; }
