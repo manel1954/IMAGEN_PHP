@@ -54,25 +54,27 @@ if ($action === 'status') {
     exit;
 }
 
-// ── DMR start: enable + start (persiste tras reinicio) ───────────────
+// ── DMR start ────────────────────────────────────────────────────────
 if ($action === 'start') {
-    shell_exec('sudo systemctl enable dmrgateway 2>/dev/null');
+    file_put_contents('/var/lib/mmdvm-state',
+        preg_replace('/^dmr=.*/m', 'dmr=on', file_get_contents('/var/lib/mmdvm-state'))
+    );
     shell_exec('sudo systemctl start dmrgateway 2>/dev/null');
     sleep(2);
-    shell_exec('sudo systemctl enable mmdvmhost 2>/dev/null');
     shell_exec('sudo systemctl start mmdvmhost 2>/dev/null');
     header('Content-Type: application/json');
     echo json_encode(['ok' => true]);
     exit;
 }
 
-// ── DMR stop: stop + disable (no arranca tras reinicio) ──────────────
+// ── DMR stop ─────────────────────────────────────────────────────────
 if ($action === 'stop') {
+    file_put_contents('/var/lib/mmdvm-state',
+        preg_replace('/^dmr=.*/m', 'dmr=off', file_get_contents('/var/lib/mmdvm-state'))
+    );
     shell_exec('sudo systemctl stop mmdvmhost 2>/dev/null');
-    shell_exec('sudo systemctl disable mmdvmhost 2>/dev/null');
     sleep(1);
     shell_exec('sudo systemctl stop dmrgateway 2>/dev/null');
-    shell_exec('sudo systemctl disable dmrgateway 2>/dev/null');
     header('Content-Type: application/json');
     echo json_encode(['ok' => true]);
     exit;
@@ -93,20 +95,25 @@ if ($action === 'ysf-status') {
     exit;
 }
 
-// ── YSF start: enable + start ────────────────────────────────────────
-if ($action === 'ysf-start') {
-    shell_exec('sudo systemctl enable ysfgateway 2>/dev/null');
-    shell_exec('sudo systemctl start ysfgateway 2>/dev/null');
-    sleep(1);
+// ── YSF start ────────────────────────────────────────────────────────
+if ($action === 'mmdvmysf-start') {
+    file_put_contents('/var/lib/mmdvm-state',
+        preg_replace('/^ysf=.*/m', 'ysf=on', file_get_contents('/var/lib/mmdvm-state'))
+    );
+    shell_exec('sudo systemctl start mmdvmysf 2>/dev/null');
     header('Content-Type: application/json');
     echo json_encode(['ok' => true]);
     exit;
 }
 
-// ── YSF stop: stop + disable ─────────────────────────────────────────
-if ($action === 'ysf-stop') {
+// ── YSF stop ─────────────────────────────────────────────────────────
+if ($action === 'mmdvmysf-stop') {
+    file_put_contents('/var/lib/mmdvm-state',
+        preg_replace('/^ysf=.*/m', 'ysf=off', file_get_contents('/var/lib/mmdvm-state'))
+    );
     shell_exec('sudo systemctl stop ysfgateway 2>/dev/null');
-    shell_exec('sudo systemctl disable ysfgateway 2>/dev/null');
+    sleep(1);
+    shell_exec('sudo systemctl stop mmdvmysf 2>/dev/null');
     header('Content-Type: application/json');
     echo json_encode(['ok' => true]);
     exit;
