@@ -600,7 +600,7 @@ button.btn-header { font-family: var(--font-mono); }
 <h1>PANEL SISTEMAS DIGITALES</h1>
 <span class="uptime" id="clock">--:--:--</span>
 <a href="edit_ini.php?file=displaydriver" target="_blank" class="btn-header cyan"> 📄 Config Display-Driver </a>
-<button onclick="instalarDisplay()" class="btn-header amber" id="btnInstalar"> ⚙ Instalar Display-Driver </button>
+<!-- <button onclick="instalarDisplay()" class="btn-header amber" id="btnInstalar"> ⚙ Instalar Display-Driver </button> -->
 <a href="?action=backup-configs" class="btn-header amber"> 💾 Backup Configs </a>
 <button onclick="openRestore()" class="btn-header cyan"> 📂 Restore Configs </button>
 <button id="btnReboot" class="btn-header red" onclick="rebootPi()">⏻ Reiniciar Pi</button>
