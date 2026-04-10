@@ -394,7 +394,7 @@ button.btn-header { font-family: var(--font-mono); }
     inset: 0;
     border-radius: 1px;
     background: #1a2535;
-    border: 3px solid var(--amber);   /* ← cambia el 1px por esto */
+    border: 1px solid var(--amber);   /* ← cambia el 1px por esto */
     transition: background .3s, border-color .3s, box-shadow .3s;
 }
 .sw-knob {
