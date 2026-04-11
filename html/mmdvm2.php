@@ -573,7 +573,8 @@ button.btn-header { font-family: var(--font-mono); }
 .lh-tx-dot-ysf { width: 6px; height: 6px; border-radius: 50%; background: var(--violet); box-shadow: 0 0 6px var(--violet); animation: pulse 1s infinite; flex-shrink: 0; }
 .lh-call-ysf { font-family: var(--font-mono); font-size: .82rem; color: var(--violet); letter-spacing: .05em; font-weight: bold; }
 #ysfLastHeardPanel { grid-column: 2; }
-@media (max-width:900px) { #ysfLastHeardPanel { grid-column: 1; } }
+#ysfDisplayPanel    { grid-column: 2; }
+@media (max-width:900px) { #ysfLastHeardPanel { grid-column: 1; } #ysfDisplayPanel { grid-column: 1; } }
 
 /* ── Logs ─────────────────────────────────────────────────────── */
 .log-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1.2rem; }
@@ -703,7 +704,7 @@ button.btn-header { font-family: var(--font-mono); }
 
 <!-- ── Displays lado a lado ── -->
 <div class="display-row">
-  <div>
+  <div id="dmrDisplayPanel">
     <div class="panel-label">▸ DMR Display</div>
     <div class="nextion">
       <div class="nx-topbar"><span class="nx-mode">DMR · SIMPLEX</span><span id="nxStationLabel">EA3EIZ · ADER</span><span class="nx-tg" id="nxTG">—</span></div>
@@ -719,7 +720,7 @@ button.btn-header { font-family: var(--font-mono); }
       <div class="nx-botbar"><span class="nx-dmrid" id="nxDmrid">—</span><span>SLOT <span id="nxSlot">—</span></span><span class="nx-source" id="nxSource"></span></div>
     </div>
   </div>
-  <div>
+  <div id="ysfDisplayPanel">
     <div class="panel-label ysf-label">▸ C4FM Display</div>
     <div class="nextion-ysf">
       <div class="nx-topbar ysf-bar"><span class="nx-mode">C4FM · YSF</span><span style="color:#6a3a9a" id="ysfStationLabel">EA3EIZ · ADER</span><span class="nx-dest" id="ysfDest">—</span></div>
@@ -884,12 +885,14 @@ function setDMRToggle(on){
     // Mostrar u ocultar los dos paneles de log DMR
     document.getElementById('dmrLogPanels').style.display=on?'contents':'none';
     document.getElementById('dmrLastHeardPanel').style.display=on?'':'none';
+    document.getElementById('dmrDisplayPanel').style.display=on?'':'none';
 }
 
 function setYSFToggle(on){const chk=document.getElementById('chkYSF'),lbl=document.getElementById('ysfToggleLabel'),sta=document.getElementById('ysfToggleStatus');chk.checked=on;lbl.className='toggle-label'+(on?' on-ysf':'');sta.className='toggle-status'+(on?' on':'');sta.textContent=on?'ON':'OFF';document.getElementById('ysfRefreshBadge').style.display=on?'flex':'none';
     // Mostrar u ocultar los dos paneles de log YSF
     document.getElementById('ysfLogPanels').style.display=on?'contents':'none';
     document.getElementById('ysfLastHeardPanel').style.display=on?'':'none';
+    document.getElementById('ysfDisplayPanel').style.display=on?'':'none';
 }
 
 function showIdle(){currentlyActive=false;animateVU(false,'dmr');document.getElementById('nxTxBar').classList.remove('active');document.getElementById('nxTG').textContent='—';document.getElementById('nxSlot').textContent='—';document.getElementById('nxDmrid').textContent='—';const src=document.getElementById('nxSource');src.textContent='';src.className='nx-source';document.getElementById('nxCenter').innerHTML='<div class="nx-clock" id="nxClock">00:00:00</div><div class="nx-date" id="nxDate">—</div>';updateClock();}
