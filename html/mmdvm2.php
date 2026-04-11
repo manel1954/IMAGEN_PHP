@@ -506,7 +506,8 @@ button.btn-header { font-family: var(--font-mono); }
 .sw.dmr input:checked ~ .sw-knob { transform: translateX(28px); background: var(--green); box-shadow: 0 0 8px rgba(0,255,159,.6); }
 .sw.ysf input:checked ~ .sw-track { border-radius: 2px; background: #1a2535; border: 2px solid #999999; }
 .sw.ysf input:checked ~ .sw-knob { transform: translateX(28px); background: var(--green); box-shadow: 0 0 8px rgba(0,255,159,.6); }
-.sw.busy { opacity: .5; pointer-events: none; }
+.sw.dstar input:checked ~ .sw-track { border-radius: 2px; background: #1a2535; border: 2px solid #999999; }
+.sw.dstar input:checked ~ .sw-knob { transform: translateX(28px); background: var(--green); box-shadow: 0 0 8px rgba(0,255,159,.6); }
 .sw-busy-dot { display: none; position: absolute; top: 50%; right: -18px; transform: translateY(-50%); width: 8px; height: 8px; border-radius: 50%; border: 2px solid var(--amber); border-top-color: transparent; animation: spin .7s linear infinite; }
 .sw.busy .sw-busy-dot { display: block; }
 @keyframes spin { to { transform: translateY(-50%) rotate(360deg); } }
@@ -744,7 +745,7 @@ button.btn-header { font-family: var(--font-mono); }
     <div class="service-card-label" style="color:#00e5ff;">▸ D-STAR · MMDVMHost + DStarGateway</div>
     <div class="toggle-row">
       <span class="toggle-label" id="dstarToggleLabel">D-STAR</span>
-      <label class="sw" id="swDSTAR" style="cursor:pointer;">
+      <label class="sw dstar" id="swDSTAR">
         <input type="checkbox" id="chkDSTAR" onchange="toggleDStar(this)">
         <span class="sw-track" style="border-color:#999;"></span>
         <span class="sw-knob" style="background:#e95c04;"></span>
