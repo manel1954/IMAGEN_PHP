@@ -847,9 +847,9 @@ async function fetchStationInfo() {
         const yNxFtx  = document.getElementById('ysfNxFtx');  if(yNxFtx)  yNxFtx.textContent  = d.ysfFreqTX || '—';
         const yNxIp   = document.getElementById('ysfNxIp');   if(yNxIp)   yNxIp.textContent   = d.ysfIp     || '—';
         // Actualizar label en los displays Nextion
-        const label = d.callsign + ' · ADER';
-        const nx = document.getElementById('nxStationLabel');   if(nx) nx.textContent = label;
-        const yx = document.getElementById('ysfStationLabel');  if(yx) yx.textContent = label;
+        // const label = d.callsign + ' · ADER';
+        // const nx = document.getElementById('nxStationLabel');   if(nx) nx.textContent = label;
+        // const yx = document.getElementById('ysfStationLabel');  if(yx) yx.textContent = label;
     } catch(e) { console.warn('station-info error:', e); }
 }
 
