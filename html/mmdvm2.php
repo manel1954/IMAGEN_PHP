@@ -828,7 +828,7 @@ async function fetchStationInfo() {
     try {
         const r = await fetch('?action=station-info');
         const d = await r.json();
-        $Callsign = $ini['General']['Callsign'] ?? ($ini['General']['Callsign'] ?? '');
+        
         document.getElementById('scCallsign').textContent = '📡 ' + d.callsign;
         const loc = (d.location || 'Barcelona').toUpperCase();
         document.getElementById('scLocation').textContent = loc + ' · CATALUÑA · ' + d.locator;
