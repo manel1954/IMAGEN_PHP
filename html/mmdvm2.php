@@ -485,7 +485,7 @@ button.btn-header { font-family: var(--font-mono); }
 .section-divider { width: 1px; height: 20px; background: var(--border); margin: 0 .5rem; }
 
 /* ── Controls ─────────────────────────────────────────────────── */
-.controls-section { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 1.2rem; margin-bottom: 2rem; }
+.controls-section { display: grid; grid-template-columns: 1fr 1fr; gap: 1.2rem; margin-bottom: 2rem; }
 @media (max-width:800px) { .controls-section { grid-template-columns: 1fr; } }
 .service-card { background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 1.2rem 1.6rem; }
 .service-card-label { font-family: var(--font-mono); font-size: .7rem; letter-spacing: .15em; text-transform: uppercase; margin-bottom: 1rem; }
