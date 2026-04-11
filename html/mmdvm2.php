@@ -622,7 +622,7 @@ button.btn-header { font-family: var(--font-mono); }
 <header class="ctrl-header">
 <img src="Logo_ea3eiz.png" alt="EA3EIZ" style="height:40px;width:auto;">
 <h1>PANEL SISTEMAS DIGITALES</h1>
-<!-- <span class="uptime" id="clock">--:--:--</span> -->
+<span class="uptime" id="clock">--:--:--</span>
 <a href="edit_ini.php?file=displaydriver" target="_blank" class="btn-header cyan"> 📄 Config Display-Driver </a>
 <a href="?action=backup-configs" class="btn-header amber"> 💾 Backup Configs </a>
 <button onclick="openRestore()" class="btn-header cyan"> 📂 Restore Configs </button>
@@ -639,7 +639,7 @@ button.btn-header { font-family: var(--font-mono); }
     </div>
     <div class="station-divider"></div>
     <div class="station-meta">
-        <!-- <div class="station-meta-item">
+        <div class="station-meta-item">
             <span class="station-meta-label">🪪 DMR ID</span>
             <span class="station-meta-value" id="scDmrId">—</span>
         </div>
@@ -654,7 +654,7 @@ button.btn-header { font-family: var(--font-mono); }
         <div class="station-meta-item">
             <span class="station-meta-label">🌍 País</span>
             <span class="station-meta-value violet">🇪🇸 España</span>
-        </div> -->
+        </div>
         <div class="station-divider" style="height:50px;"></div>
         <div class="station-meta-item"><span class="station-meta-label">🖥️ CPU</span><span class="station-meta-value" id="siCpu" style="color:var(--green);">—</span></div>
         <div class="station-meta-item"><span class="station-meta-label">🌡️ Temp</span><span class="station-meta-value" id="siTemp" style="color:var(--amber);">—</span></div>
