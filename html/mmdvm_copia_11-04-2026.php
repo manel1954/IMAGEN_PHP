@@ -630,12 +630,12 @@ button.btn-header { font-family: var(--font-mono); }
 <div class="station-card">
     <div class="station-card-main">
         <div class="station-callsign" id="scCallsign">📡 —</div>
-        <div class="station-location" id="scLocation">— · —</div>
+        <!-- <div class="station-location" id="scLocation">— · —</div> -->
         <div class="station-name-pill" id="scPill">— · —</div>
     </div>
     <div class="station-divider"></div>
     <div class="station-meta">
-        <div class="station-meta-item">
+        <!-- <div class="station-meta-item">
             <span class="station-meta-label">🪪 DMR ID</span>
             <span class="station-meta-value" id="scDmrId">—</span>
         </div>
@@ -646,7 +646,7 @@ button.btn-header { font-family: var(--font-mono); }
         <div class="station-meta-item">
             <span class="station-meta-label">📍 Locator</span>
             <span class="station-meta-value green" id="scLocator">—</span>
-        </div>
+        </div> -->
         <!-- <div class="station-meta-item">
             <span class="station-meta-label">🌍 País</span>
             <span class="station-meta-value violet">🇪🇸 España</span>
@@ -825,12 +825,12 @@ async function fetchStationInfo() {
         const r = await fetch('?action=station-info');
         const d = await r.json();
         document.getElementById('scCallsign').textContent = '📡 ' + d.callsign;
-        const loc = (d.location || 'Barcelona').toUpperCase();
+        // const loc = (d.location || 'Barcelona').toUpperCase();
         // document.getElementById('scLocation').textContent = loc + ' · CATALUÑA · ' + d.locator;
         // document.getElementById('scPill').textContent     = 'Manel — ' + d.callsign;
-        document.getElementById('scDmrId').textContent    = d.dmrid;
-        document.getElementById('scFreq').textContent     = d.freq;
-        document.getElementById('scLocator').textContent  = d.locator;
+        // document.getElementById('scDmrId').textContent    = d.dmrid;
+        // document.getElementById('scFreq').textContent     = d.freq;
+        // document.getElementById('scLocator').textContent  = d.locator;
         // Nextion DMR
         const nxPort = document.getElementById('nxPort'); if(nxPort) nxPort.textContent = d.port    || '—';
         const nxFrx  = document.getElementById('nxFrx');  if(nxFrx)  nxFrx.textContent  = d.freqRX  || '—';

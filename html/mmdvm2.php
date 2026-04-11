@@ -633,8 +633,8 @@ button.btn-header { font-family: var(--font-mono); }
         <!-- <div class="station-location" id="scLocation">— · —</div> -->
         <div class="station-name-pill" id="scPill">— · —</div>
     </div>
-    <div class="station-divider"></div>
-    <div class="station-meta">
+    <!-- <div class="station-divider"></div>
+    <div class="station-meta"> -->
         <!-- <div class="station-meta-item">
             <span class="station-meta-label">🪪 DMR ID</span>
             <span class="station-meta-value" id="scDmrId">—</span>
