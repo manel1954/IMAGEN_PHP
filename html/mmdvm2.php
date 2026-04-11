@@ -632,6 +632,29 @@ button.btn-header { font-family: var(--font-mono); }
 
 <!-- ── Station Card — datos dinámicos desde MMDVMHost.ini ── -->
 <div class="station-card">
+    <div class="station-card-main">
+        <div class="station-callsign" id="scCallsign">📡 —</div>
+        <div class="station-location" id="scLocation">— · —</div>
+        <div class="station-name-pill" id="scPill">— · —</div>
+    </div>
+    <div class="station-divider"></div>
+    <div class="station-meta">
+        <div class="station-meta-item">
+            <span class="station-meta-label">🪪 DMR ID</span>
+            <span class="station-meta-value" id="scDmrId">—</span>
+        </div>
+        <div class="station-meta-item">
+            <span class="station-meta-label">📡 Frecuencia TX</span>
+            <span class="station-meta-value cyan" id="scFreq">—</span>
+        </div>
+        <div class="station-meta-item">
+            <span class="station-meta-label">📍 Locator</span>
+            <span class="station-meta-value green" id="scLocator">—</span>
+        </div>
+        <div class="station-meta-item">
+            <span class="station-meta-label">🌍 País</span>
+            <span class="station-meta-value violet">🇪🇸 España</span>
+        </div>
         <div class="station-divider" style="height:50px;"></div>
         <div class="station-meta-item"><span class="station-meta-label">🖥️ CPU</span><span class="station-meta-value" id="siCpu" style="color:var(--green);">—</span></div>
         <div class="station-meta-item"><span class="station-meta-label">🌡️ Temp</span><span class="station-meta-value" id="siTemp" style="color:var(--amber);">—</span></div>
