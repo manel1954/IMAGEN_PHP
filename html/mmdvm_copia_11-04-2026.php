@@ -55,24 +55,23 @@ function formatFreq($hz) {
     return number_format($mhz, 3, '.', '') . ' MHz';
 }
 
-// ── // ── Datos desdeS MMDVMHost.ini ─────────────────────────────────
+// ── Datos desde MMDVMHost.ini ────────────────────────────────────────
 if ($action === 'station-info') {
     $iniPath = '/home/pi/MMDVMHost/MMDVMHost.ini';
     $ini = parseMMDVMIni($iniPath);
 
-    // $callsign = $ini['General']['Callsign']    ?? 'EA3EIZ';
-    // $dmrid    = $ini['General']['Id']          ?? '214317526';
-    // $txfreq   = $ini['General']['TXFrequency'] ?? ($ini['General']['Frequency'] ?? '430000000');
-    $freq     = formatFreq($txfreq);
+    $callsign = $ini['General']['Callsign']    ?? 'EA3EIZ';
+    $dmrid    = $ini['General']['Id']          ?? '214317526';
+    $txfreq   = $ini['General']['TXFrequency'] ?? ($ini['General']['Frequency'] ?? '430000000');
 
-    // $lat      = $ini['Info']['Latitude']    ?? '41.3851';
-    // $lon      = $ini['Info']['Longitude']   ?? '2.1734';
-    // $location = $ini['Info']['Location']    ?? 'Barcelona';
-    // $desc     = $ini['Info']['Description'] ?? '';
+    $lat      = $ini['Info']['Latitude']    ?? '41.3851';
+    $lon      = $ini['Info']['Longitude']   ?? '2.1734';
+    $location = $ini['Info']['Location']    ?? 'Barcelona';
+    $desc     = $ini['Info']['Description'] ?? '';
 
-    // $locator  = (floatval($lat) != 0 || floatval($lon) != 0)
-    //     ? latLonToLocator($lat, $lon)
-    //     : 'JN11CK';
+    $locator  = (floatval($lat) != 0 || floatval($lon) != 0)
+        ? latLonToLocator($lat, $lon)
+        : 'JN11CK';
 
     // Puerto del modem — [Modem] UARTPort=
     $port = $ini['Modem']['UARTPort'] ?? ($ini['modem']['UARTPort'] ?? '');
@@ -81,7 +80,7 @@ if ($action === 'station-info') {
     $rxhz   = $ini['Info']['RXFrequency'] ?? '0';
     $txhz   = $ini['Info']['TXFrequency'] ?? $txfreq;
     $freqRX = formatFreq($rxhz);
-    $freq   = formatFreq($txhz);   // sobreescribir freq con el valor de [Info]
+    $freq   = formatFreq($txhz);
 
     // IP: primero Address del ini, si vacía o 0.0.0.0 usar IP real de la Pi
     $iniIp = trim($ini['General']['Address'] ?? '');
@@ -90,35 +89,35 @@ if ($action === 'station-info') {
     }
     $ip = $iniIp ?: '—';
 
-    // ── Datos desde MMDVMYSF.ini ────────────────────────────────
+    // ── Datos desde MMDVMYSF.ini ─────────────────────────────────
     $ysfIniPath = '/home/pi/MMDVMHost/MMDVMYSF.ini';
     $ysfIni = parseMMDVMIni($ysfIniPath);
 
-    $ysfPort  = $ysfIni['Modem']['UARTPort'] ?? ($ysfIni['modem']['UARTPort'] ?? '—');
-    $ysfRxHz  = $ysfIni['Info']['RXFrequency'] ?? '0';
-    $ysfTxHz  = $ysfIni['Info']['TXFrequency'] ?? '0';
+    $ysfPort   = $ysfIni['Modem']['UARTPort']      ?? ($ysfIni['modem']['UARTPort'] ?? '—');
+    $ysfRxHz   = $ysfIni['Info']['RXFrequency']    ?? '0';
+    $ysfTxHz   = $ysfIni['Info']['TXFrequency']    ?? '0';
     $ysfFreqRX = formatFreq($ysfRxHz);
     $ysfFreqTX = formatFreq($ysfTxHz);
     $ysfIpRaw  = trim($ysfIni['General']['Address'] ?? '');
-    $ysfIp     = ($ysfIpRaw !== '' && $ysfIpRaw !== '0.0.0.0') ? $ysfIpRaw : $ip; // reusar IP de la Pi
+    $ysfIp     = ($ysfIpRaw !== '' && $ysfIpRaw !== '0.0.0.0') ? $ysfIpRaw : $ip;
 
     header('Content-Type: application/json');
     echo json_encode([
-        'callsign' => strtoupper(trim($callsign)),
-        'dmrid'    => trim($dmrid),
-        'freq'     => $freq,
-        'freqRX'   => $freqRX,
-        'port'     => $port ?: '—',
-        'ip'       => $ip,
-        'locator'  => $locator,
-        'location' => trim($location),
-        'desc'     => trim($desc),
-        'lat'      => $lat,
-        'lon'      => $lon,
-        'ysfPort'  => $ysfPort ?: '—',
-        'ysfFreqRX'=> $ysfFreqRX,
-        'ysfFreqTX'=> $ysfFreqTX,
-        'ysfIp'    => $ysfIp ?: '—',
+        'callsign'  => strtoupper(trim($callsign)),
+        'dmrid'     => trim($dmrid),
+        'freq'      => $freq,
+        'freqRX'    => $freqRX,
+        'port'      => $port ?: '—',
+        'ip'        => $ip,
+        'locator'   => $locator,
+        'location'  => trim($location),
+        'desc'      => trim($desc),
+        'lat'       => $lat,
+        'lon'       => $lon,
+        'ysfPort'   => $ysfPort ?: '—',
+        'ysfFreqRX' => $ysfFreqRX,
+        'ysfFreqTX' => $ysfFreqTX,
+        'ysfIp'     => $ysfIp ?: '—',
     ]);
     exit;
 }
@@ -410,7 +409,6 @@ if ($action === 'ysf-transmission') {
 body { background: var(--bg); color: var(--text); font-family: var(--font-ui); font-size: 1rem; min-height: 100vh; padding: 0; margin: 0; }
 .ctrl-header { border-bottom: 1px solid var(--border); padding: 1.2rem 2rem; display: flex; align-items: center; gap: .8rem; background: var(--surface); flex-wrap: wrap; }
 .ctrl-header h1 { font-family: var(--font-ui); font-weight: 700; font-size: 1.5rem; letter-spacing: .08em; color: #e2eaf5; margin: 0; text-transform: uppercase; }
-.ctrl-header .uptime { margin-left: auto; font-family: var(--font-mono); font-size: .8rem; color: var(--text-dim); }
 .btn-header { font-family: var(--font-mono); font-size: .75rem; letter-spacing: .08em; text-transform: uppercase; background: transparent; border-radius: 4px; padding: .35rem .9rem; cursor: pointer; transition: background .2s; text-decoration: none; display: inline-block; }
 .btn-header.cyan { color: var(--cyan); border: 1px solid var(--cyan); }
 .btn-header.cyan:hover { background: rgba(0,212,255,.1); }
@@ -437,7 +435,6 @@ button.btn-header { font-family: var(--font-mono); }
 .station-meta-value.green { color: var(--green); }
 .station-meta-value.violet { color: var(--violet); }
 .station-assoc { margin-left: auto; font-family: var(--font-mono); font-size: .7rem; color: var(--text-dim); letter-spacing: .12em; text-transform: uppercase; border: 1px solid var(--border); border-radius: 4px; padding: .3rem .8rem; }
-/* badge fuente ini */
 .ini-source-badge { position: absolute; bottom: .45rem; right: .8rem; font-family: var(--font-mono); font-size: .58rem; color: var(--text-dim); letter-spacing: .1em; opacity: .55; }
 .ini-source-badge span { color: var(--green-dim); }
 @media (max-width:700px) { .station-card { gap: 1.2rem; padding: 1rem; } .station-divider { display: none; } .station-assoc { margin-left: 0; } }
@@ -622,7 +619,6 @@ button.btn-header { font-family: var(--font-mono); }
 <header class="ctrl-header">
 <img src="Logo_ea3eiz.png" alt="EA3EIZ" style="height:40px;width:auto;">
 <h1>PANEL SISTEMAS DIGITALES</h1>
-<span class="uptime" id="clock">--:--:--</span>
 <a href="edit_ini.php?file=displaydriver" target="_blank" class="btn-header cyan"> 📄 Config Display-Driver </a>
 <a href="?action=backup-configs" class="btn-header amber"> 💾 Backup Configs </a>
 <button onclick="openRestore()" class="btn-header cyan"> 📂 Restore Configs </button>
@@ -651,10 +647,10 @@ button.btn-header { font-family: var(--font-mono); }
             <span class="station-meta-label">📍 Locator</span>
             <span class="station-meta-value green" id="scLocator">—</span>
         </div>
-        <div class="station-meta-item">
+        <!-- <div class="station-meta-item">
             <span class="station-meta-label">🌍 País</span>
             <span class="station-meta-value violet">🇪🇸 España</span>
-        </div>
+        </div> -->
         <div class="station-divider" style="height:50px;"></div>
         <div class="station-meta-item"><span class="station-meta-label">🖥️ CPU</span><span class="station-meta-value" id="siCpu" style="color:var(--green);">—</span></div>
         <div class="station-meta-item"><span class="station-meta-label">🌡️ Temp</span><span class="station-meta-value" id="siTemp" style="color:var(--amber);">—</span></div>
@@ -663,7 +659,7 @@ button.btn-header { font-family: var(--font-mono); }
         <div class="station-meta-item"><span class="station-meta-label">💿 Disco usado</span><span class="station-meta-value" id="siDisk" style="color:var(--amber);">—</span></div>
         <div class="station-meta-item"><span class="station-meta-label">💿 Disco libre</span><span class="station-meta-value" id="siDiskFree" style="color:var(--green);">—</span></div>
     </div>
-    <div class="station-assoc">Associació ADER</div>
+    <!-- <div class="station-assoc">Associació ADER</div> -->
     <div class="ini-source-badge">desde <span>MMDVMHost.ini</span></div>
 </div>
 
@@ -828,28 +824,27 @@ async function fetchStationInfo() {
     try {
         const r = await fetch('?action=station-info');
         const d = await r.json();
-        
         document.getElementById('scCallsign').textContent = '📡 ' + d.callsign;
         const loc = (d.location || 'Barcelona').toUpperCase();
-        document.getElementById('scLocation').textContent = loc + ' · CATALUÑA · ' + d.locator;
-        document.getElementById('scPill').textContent     = 'Manel — ' + d.callsign;
+        // document.getElementById('scLocation').textContent = loc + ' · CATALUÑA · ' + d.locator;
+        // document.getElementById('scPill').textContent     = 'Manel — ' + d.callsign;
         document.getElementById('scDmrId').textContent    = d.dmrid;
         document.getElementById('scFreq').textContent     = d.freq;
         document.getElementById('scLocator').textContent  = d.locator;
-        // Campos del nextion DMR
-        const nxPort = document.getElementById('nxPort'); if(nxPort) nxPort.textContent = d.port || '—';
-        const nxFrx  = document.getElementById('nxFrx');  if(nxFrx)  nxFrx.textContent  = d.freqRX || '—';
-        const nxFtx  = document.getElementById('nxFtx');  if(nxFtx)  nxFtx.textContent  = d.freq   || '—';
-        const nxIp   = document.getElementById('nxIp');   if(nxIp)   nxIp.textContent   = d.ip     || '—';
-        // Campos nextion C4FM desde MMDVMYSF.ini
-        const yNxPort = document.getElementById('ysfNxPort'); if(yNxPort) yNxPort.textContent = d.ysfPort   || '—';
+        // Nextion DMR
+        const nxPort = document.getElementById('nxPort'); if(nxPort) nxPort.textContent = d.port    || '—';
+        const nxFrx  = document.getElementById('nxFrx');  if(nxFrx)  nxFrx.textContent  = d.freqRX  || '—';
+        const nxFtx  = document.getElementById('nxFtx');  if(nxFtx)  nxFtx.textContent  = d.freq    || '—';
+        const nxIp   = document.getElementById('nxIp');   if(nxIp)   nxIp.textContent   = d.ip      || '—';
+        // Nextion C4FM
+        const yNxPort = document.getElementById('ysfNxPort'); if(yNxPort) yNxPort.textContent = d.ysfPort    || '—';
         const yNxFrx  = document.getElementById('ysfNxFrx');  if(yNxFrx)  yNxFrx.textContent  = d.ysfFreqRX || '—';
         const yNxFtx  = document.getElementById('ysfNxFtx');  if(yNxFtx)  yNxFtx.textContent  = d.ysfFreqTX || '—';
         const yNxIp   = document.getElementById('ysfNxIp');   if(yNxIp)   yNxIp.textContent   = d.ysfIp     || '—';
-        // Actualizar label en los displays Nextion
+        // Labels Nextion topbar
         const label = d.callsign + ' · ADER';
-        const nx = document.getElementById('nxStationLabel');   if(nx) nx.textContent = label;
-        const yx = document.getElementById('ysfStationLabel');  if(yx) yx.textContent = label;
+        const nx = document.getElementById('nxStationLabel');  if(nx) nx.textContent = label;
+        const yx = document.getElementById('ysfStationLabel'); if(yx) yx.textContent = label;
     } catch(e) { console.warn('station-info error:', e); }
 }
 
@@ -890,7 +885,6 @@ function updateClock(){
     const now=new Date();
     const hms=now.toLocaleTimeString('es-ES');
     const date=now.toLocaleDateString('es-ES',{weekday:'short',day:'2-digit',month:'short',year:'numeric'}).toUpperCase();
-    document.getElementById('clock').textContent=hms;
     if(!currentlyActive){const clk=document.getElementById('nxClock');if(clk){clk.textContent=hms;document.getElementById('nxDate').textContent=date;}}
     if(!ysfCurrentlyActive){const yClk=document.getElementById('ysfNxClock');if(yClk){yClk.textContent=hms;document.getElementById('ysfNxDate').textContent=date;}}
 }
@@ -952,10 +946,8 @@ async function fetchSysInfo(){try{const r=await fetch('?action=sysinfo');const d
 fetchSysInfo();setInterval(fetchSysInfo,8000);
 
 (async()=>{
-    // Station info al cargar + refresco cada 60s (se actualiza si editas el .ini)
     await fetchStationInfo();
-    setInterval(fetchStationInfo, 60000);
-
+    setInterval(fetchStationInfo,60000);
     await checkStatus();await checkYSFStatus();await checkMMDVMYSFStatus();
     setInterval(checkStatus,10000);setInterval(checkYSFStatus,8000);setInterval(checkMMDVMYSFStatus,8000);
     if(!running){showIdle();fetchTransmission();}

@@ -828,9 +828,9 @@ async function fetchStationInfo() {
         const loc = (d.location || 'Barcelona').toUpperCase();
         // document.getElementById('scLocation').textContent = loc + ' · CATALUÑA · ' + d.locator;
         // document.getElementById('scPill').textContent     = 'Manel — ' + d.callsign;
-        document.getElementById('scDmrId').textContent    = d.dmrid;
-        document.getElementById('scFreq').textContent     = d.freq;
-        document.getElementById('scLocator').textContent  = d.locator;
+        // document.getElementById('scDmrId').textContent    = d.dmrid;
+        // document.getElementById('scFreq').textContent     = d.freq;
+        // document.getElementById('scLocator').textContent  = d.locator;
         // Nextion DMR
         const nxPort = document.getElementById('nxPort'); if(nxPort) nxPort.textContent = d.port    || '—';
         const nxFrx  = document.getElementById('nxFrx');  if(nxFrx)  nxFrx.textContent  = d.freqRX  || '—';
