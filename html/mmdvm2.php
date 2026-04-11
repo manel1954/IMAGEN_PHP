@@ -372,10 +372,11 @@ if ($action === 'transmission') {
 
 // ── DStar status ─────────────────────────────────────────────────────
 if ($action === 'dstar-status') {
-    $gw  = trim(shell_exec('systemctl is-active dstargateway 2>/dev/null'));
-    $mmd = trim(shell_exec('systemctl is-active mmdvmdstar 2>/dev/null'));
+    $gw      = trim(shell_exec('systemctl is-active dstargateway 2>/dev/null'));
+    $mmd     = trim(shell_exec('systemctl is-active mmdvmdstar 2>/dev/null'));
+    $stopped = file_exists('/var/lib/dstar-stopped');
     header('Content-Type: application/json');
-    echo json_encode(['gateway' => $gw, 'mmdvm' => $mmd]);
+    echo json_encode(['gateway' => $gw, 'mmdvm' => $mmd, 'stopped' => $stopped]);
     exit;
 }
 
@@ -747,8 +748,8 @@ button.btn-header { font-family: var(--font-mono); }
       <span class="toggle-label" id="dstarToggleLabel">D-STAR</span>
       <label class="sw dstar" id="swDSTAR">
         <input type="checkbox" id="chkDSTAR" onchange="toggleDStar(this)">
-        <span class="sw-track" style="border-color:#999;"></span>
-        <span class="sw-knob" style="background:#e95c04;"></span>
+        <span class="sw-track"></span>
+        <span class="sw-knob"></span>
         <span class="sw-busy-dot"></span>
       </label>
       <span class="toggle-status" id="dstarToggleStatus">OFF</span>
@@ -1000,7 +1001,8 @@ async function checkDStarStatus(){
         const gw=d.gateway==='active',mmd=d.mmdvm==='active';
         setDot('dot-dstargw',gw?'active':'off');
         setDot('dot-dstarmmd',mmd?'active':'off');
-        dstarRunning=gw||mmd;setDSTARToggle(dstarRunning);
+        dstarRunning=(gw||mmd)&&!d.stopped;
+        setDSTARToggle(dstarRunning);
         if(dstarRunning)startDStarLogs();
     }catch(e){}
 }
