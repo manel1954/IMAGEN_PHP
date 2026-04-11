@@ -61,7 +61,7 @@ if ($action === 'station-info') {
     $ini = parseMMDVMIni($iniPath);
 
     $callsign = $ini['General']['Callsign']    ?? 'EA3EIZ';
-    $dmrid    = $ini['General']['Id']          ?? '214317526';
+    $dmrid    = $ini['General']['Id']          ?? '214317500';
     $txfreq   = $ini['General']['TXFrequency'] ?? ($ini['General']['Frequency'] ?? '430000000');
     $freq     = formatFreq($txfreq);
 
