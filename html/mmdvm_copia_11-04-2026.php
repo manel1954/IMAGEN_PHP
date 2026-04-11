@@ -645,11 +645,12 @@ button.btn-header { font-family: var(--font-mono); }
 
 <div class="status-bar">
 <div class="status-item"><div class="dot" id="dot-mosquitto"></div><span>Mosquitto</span></div>
-<div class="status-item"><div class="dot" id="dot-gateway"></div><span>DMRGateway</span></div>
 <div class="status-item"><div class="dot" id="dot-mmdvm"></div><span>MMDVMHost</span></div>
+<div class="status-item"><div class="dot" id="dot-gateway"></div><span>DMRGateway</span></div>
+
 <div class="section-divider"></div>
-<div class="status-item"><div class="dot" id="dot-ysf"></div><span style="color:var(--violet)">YSFGateway</span></div>
 <div class="status-item"><div class="dot" id="dot-mmdvmysf"></div><span style="color:#26c6da">MMDVMHost YSF</span></div>
+<div class="status-item"><div class="dot" id="dot-ysf"></div><span style="color:var(--violet)">YSFGateway</span></div>
 </div>
 
 <div class="controls-section">
@@ -804,8 +805,8 @@ button.btn-header { font-family: var(--font-mono); }
 <script>
 let refreshTimer=null,txTimer=null,vuTimer=null,ysfTimer=null,mmdvmYsfTimer=null,ysfTxTimer=null,ysfVuTimer=null;
 let running=false,ysfRunning=false,mmdvmYsfRunning=false,currentlyActive=false,ysfCurrentlyActive=false;
-let ysfLastActiveTs=0;
-const YSF_IDLE_TIMEOUT=12000;
+let dmrLastActiveTs=0,ysfLastActiveTs=0;
+const DMR_IDLE_TIMEOUT=12000,YSF_IDLE_TIMEOUT=12000;
 
 // ── Station card desde MMDVMHost.ini ────────────────────────────────
 async function fetchStationInfo() {
@@ -904,7 +905,13 @@ function showYSFActive(d){ysfCurrentlyActive=true;animateVU(true,'ysf');document
 function renderLastHeard(list,activeCall){const body=document.getElementById('lhBody');if(!list||list.length===0){body.innerHTML='<div class="lh-empty">Sin actividad reciente</div>';return;}body.innerHTML=list.map(r=>{const isActive=activeCall&&r.callsign===activeCall;const srcCls=r.source==='RF'?'rf':'net',srcLbl=r.source==='RF'?'RF':'NET';const dot=isActive?'<span class="lh-tx-dot"></span>':'';const flag=getFlagByCall(r.callsign);return`<div class="lh-row${isActive?' lh-active':''}"><div class="lh-call-wrap">${dot}<span class="lh-call">${flag} ${esc(r.callsign)}</span></div><span class="lh-name">${esc(r.name||'—')}</span><span class="lh-tg">${esc(r.tg||'—')}</span><span class="lh-time">${esc(r.time||'—')}</span><span class="lh-src ${srcCls}">${srcLbl}</span></div>`;}).join('');}
 function renderYSFLastHeard(list,activeCall){const body=document.getElementById('ysfLhBody');if(!list||list.length===0){body.innerHTML='<div class="lh-empty">Sin actividad C4FM</div>';return;}body.innerHTML=list.map(r=>{const isActive=activeCall&&r.callsign===activeCall;const srcCls=r.source==='RF'?'rf':'net',srcLbl=r.source==='RF'?'RF':'NET';const dot=isActive?'<span class="lh-tx-dot-ysf"></span>':'';const flag=getFlagByCall(r.callsign);return`<div class="lh-row-ysf${isActive?' lh-active':''}"><div class="lh-call-wrap">${dot}<span class="lh-call-ysf">${flag} ${esc(r.callsign)}</span></div><span class="lh-name">${esc(r.name||'—')}</span><span class="lh-time">${esc(r.time||'—')}</span><span class="lh-src-ysf ${srcCls}">${srcLbl}</span></div>`;}).join('');}
 
-async function fetchTransmission(){try{const r=await fetch('?action=transmission');const d=await r.json();if(d.active)showActive(d);else showIdle();renderLastHeard(d.lastHeard||[],d.active?d.callsign:null);}catch(e){showIdle();}}
+async function fetchTransmission(){
+    try{const r=await fetch('?action=transmission');const d=await r.json();
+        if(d.active){dmrLastActiveTs=Date.now();showActive(d);}
+        else{if(currentlyActive&&(Date.now()-dmrLastActiveTs)>DMR_IDLE_TIMEOUT)showIdle();}
+        renderLastHeard(d.lastHeard||[],d.active?d.callsign:null);
+    }catch(e){if(currentlyActive&&(Date.now()-dmrLastActiveTs)>DMR_IDLE_TIMEOUT)showIdle();}
+}
 
 async function fetchYSFTransmission(){
     try{const r=await fetch('?action=ysf-transmission');const d=await r.json();
