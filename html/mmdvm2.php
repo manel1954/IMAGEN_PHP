@@ -74,11 +74,28 @@ if ($action === 'station-info') {
         ? latLonToLocator($lat, $lon)
         : 'JN11CK';
 
+    // Puerto del modem
+    $port = $ini['Modem']['Port'] ?? ($ini['modem']['Port'] ?? '');
+
+    // Frecuencia RX
+    $rxhz  = $ini['General']['RXFrequency'] ?? ($ini['General']['Frequency'] ?? '0');
+    $freqRX = formatFreq($rxhz);
+
+    // IP: primero Address del ini, si vacía o 0.0.0.0 usar IP real de la Pi
+    $iniIp = trim($ini['General']['Address'] ?? '');
+    if ($iniIp === '' || $iniIp === '0.0.0.0') {
+        $iniIp = trim(shell_exec("hostname -I 2>/dev/null | awk '{print $1}'"));
+    }
+    $ip = $iniIp ?: '—';
+
     header('Content-Type: application/json');
     echo json_encode([
         'callsign' => strtoupper(trim($callsign)),
         'dmrid'    => trim($dmrid),
         'freq'     => $freq,
+        'freqRX'   => $freqRX,
+        'port'     => $port ?: '—',
+        'ip'       => $ip,
         'locator'  => $locator,
         'location' => trim($location),
         'desc'     => trim($desc),
@@ -462,7 +479,7 @@ button.btn-header { font-family: var(--font-mono); }
 @media (max-width:900px) { .display-row { grid-template-columns: 1fr; } }
 .panel-label { font-family: var(--font-mono); font-size: .7rem; letter-spacing: .15em; color: var(--amber); text-transform: uppercase; margin-bottom: .5rem; }
 .panel-label.ysf-label { color: var(--violet); }
-.nextion { background: #060c10; border: 2px solid #1a3a4a; border-radius: 6px; box-shadow: 0 0 0 1px #0d2030, inset 0 0 40px rgba(0,212,255,.04), 0 0 30px rgba(0,212,255,.08); position: relative; overflow: hidden; height: 210px; display: flex; align-items: center; justify-content: center; }
+.nextion { background: #060c10; border: 2px solid #1a3a4a; border-radius: 6px; box-shadow: 0 0 0 1px #0d2030, inset 0 0 40px rgba(0,212,255,.04), 0 0 30px rgba(0,212,255,.08); position: relative; overflow: hidden; height: 240px; display: flex; align-items: center; justify-content: center; }
 .nextion::before,.nextion::after { content: '◈'; position: absolute; font-size: .6rem; color: #1a3a4a; }
 .nextion::before { top: .5rem; left: .7rem; }
 .nextion::after { bottom: .5rem; right: .7rem; }
@@ -482,7 +499,7 @@ button.btn-header { font-family: var(--font-mono); }
 .nx-botbar .nx-source { padding: .1rem .45rem; border-radius: 2px; font-size: .6rem; letter-spacing: .1em; }
 .nx-botbar .nx-source.rf { background: rgba(0,255,159,.15); color: var(--green); border: 1px solid rgba(0,255,159,.3); }
 .nx-botbar .nx-source.net { background: rgba(0,212,255,.15); color: var(--cyan); border: 1px solid rgba(0,212,255,.3); }
-.nx-vu { position: absolute; left: 1rem; top: 38px; bottom: 32px; width: 6px; display: flex; flex-direction: column-reverse; gap: 2px; }
+.nx-vu { position: absolute; left: 1rem; top: 56px; bottom: 32px; width: 6px; display: flex; flex-direction: column-reverse; gap: 2px; }
 .nx-vu.right { left: auto; right: 1rem; }
 .nx-vu-bar { height: 5px; border-radius: 1px; background: #0d2030; transition: background .08s; }
 .nx-vu-bar.lit-g { background: var(--green); box-shadow: 0 0 4px var(--green); }
@@ -501,6 +518,15 @@ button.btn-header { font-family: var(--font-mono); }
 .nx-callsign.ysf { color: var(--violet); text-shadow: 0 0 20px rgba(181,122,255,.6); }
 .nx-name { font-family: var(--font-ui); font-weight: 500; font-size: 1.2rem; color: var(--cyan); letter-spacing: .18em; text-transform: uppercase; opacity: .9; margin-top: .15rem; }
 .nx-name.ysf { color: #d4a8ff; }
+
+/* ── Nextion info bar (Port / FRX / FTX / IP) ────────────────── */
+.nx-infobar { position: absolute; top: 30px; left: 0; right: 0; height: 26px; background: rgba(0,0,0,.35); border-bottom: 1px solid #0d2030; display: flex; align-items: center; justify-content: space-around; padding: 0 3rem; gap: 1rem; z-index: 2; }
+.nx-info-item { display: flex; align-items: center; gap: .4rem; }
+.nx-info-lbl { font-family: var(--font-mono); font-size: .58rem; color: var(--text-dim); letter-spacing: .12em; text-transform: uppercase; }
+.nx-info-val { font-family: var(--font-mono); font-size: .72rem; color: var(--text); letter-spacing: .06em; font-weight: bold; }
+.nx-info-val.cyan  { color: var(--cyan); }
+.nx-info-val.amber { color: var(--amber); }
+.nx-info-val.green { color: var(--green); }
 
 /* ── Last Heard ───────────────────────────────────────────────── */
 .lh-panel { background: var(--surface); border: 3px solid #1a3a4a; border-radius: 6px; display: flex; flex-direction: column; }
@@ -687,6 +713,12 @@ button.btn-header { font-family: var(--font-mono); }
     <div class="panel-label">▸ DMR Display</div>
     <div class="nextion">
       <div class="nx-topbar"><span class="nx-mode">DMR · SIMPLEX</span><span id="nxStationLabel">EA3EIZ · ADER</span><span class="nx-tg" id="nxTG">—</span></div>
+      <div class="nx-infobar">
+        <span class="nx-info-item"><span class="nx-info-lbl">PORT</span><span class="nx-info-val" id="nxPort">—</span></span>
+        <span class="nx-info-item"><span class="nx-info-lbl">FRX</span><span class="nx-info-val cyan" id="nxFrx">—</span></span>
+        <span class="nx-info-item"><span class="nx-info-lbl">FTX</span><span class="nx-info-val amber" id="nxFtx">—</span></span>
+        <span class="nx-info-item"><span class="nx-info-lbl">IP</span><span class="nx-info-val green" id="nxIp">—</span></span>
+      </div>
       <div class="nx-vu" id="vuLeft"></div><div class="nx-vu right" id="vuRight"></div>
       <div class="nx-center" id="nxCenter"><div class="nx-clock" id="nxClock">00:00:00</div><div class="nx-date" id="nxDate">—</div></div>
       <div class="nx-txbar" id="nxTxBar"></div>
@@ -778,6 +810,11 @@ async function fetchStationInfo() {
         document.getElementById('scDmrId').textContent    = d.dmrid;
         document.getElementById('scFreq').textContent     = d.freq;
         document.getElementById('scLocator').textContent  = d.locator;
+        // Campos del nextion DMR
+        const nxPort = document.getElementById('nxPort'); if(nxPort) nxPort.textContent = d.port || '—';
+        const nxFrx  = document.getElementById('nxFrx');  if(nxFrx)  nxFrx.textContent  = d.freqRX || '—';
+        const nxFtx  = document.getElementById('nxFtx');  if(nxFtx)  nxFtx.textContent  = d.freq   || '—';
+        const nxIp   = document.getElementById('nxIp');   if(nxIp)   nxIp.textContent   = d.ip     || '—';
         // Actualizar label en los displays Nextion
         const label = d.callsign + ' · ADER';
         const nx = document.getElementById('nxStationLabel');   if(nx) nx.textContent = label;
