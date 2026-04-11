@@ -643,10 +643,10 @@ button.btn-header { font-family: var(--font-mono); }
             <span class="station-meta-label">📡 Frecuencia TX</span>
             <span class="station-meta-value cyan" id="scFreq">—</span>
         </div>
-        <div class="station-meta-item">
+        <!-- <div class="station-meta-item">
             <span class="station-meta-label">📍 Locator</span>
             <span class="station-meta-value green" id="scLocator">—</span>
-        </div>
+        </div> -->
         <!-- <div class="station-meta-item">
             <span class="station-meta-label">🌍 País</span>
             <span class="station-meta-value violet">🇪🇸 España</span>
@@ -659,7 +659,7 @@ button.btn-header { font-family: var(--font-mono); }
         <div class="station-meta-item"><span class="station-meta-label">💿 Disco usado</span><span class="station-meta-value" id="siDisk" style="color:var(--amber);">—</span></div>
         <div class="station-meta-item"><span class="station-meta-label">💿 Disco libre</span><span class="station-meta-value" id="siDiskFree" style="color:var(--green);">—</span></div>
     </div>
-    <div class="station-assoc">Associació ADER</div>
+    <!-- <div class="station-assoc">Associació ADER</div> -->
     <div class="ini-source-badge">desde <span>MMDVMHost.ini</span></div>
 </div>
 
