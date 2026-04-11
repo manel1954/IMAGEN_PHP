@@ -1010,14 +1010,15 @@ async function toggleDStar(chk){
     const wasOn=!chk.checked;const sw=document.getElementById('swDSTAR');chk.checked=wasOn;sw.classList.add('busy');
     try{
         await fetch(wasOn?'?action=dstar-stop':'?action=dstar-start');
-        await new Promise(r=>setTimeout(r,3000));
+        await new Promise(r=>setTimeout(r,wasOn?5000:3000));
         const r=await fetch('?action=dstar-status');const d=await r.json();
         const gw=d.gateway==='active',mmd=d.mmdvm==='active';
         setDot('dot-dstargw',gw?'active':'off');setDot('dot-dstarmmd',mmd?'active':'off');
-        dstarRunning=gw||mmd;setDSTARToggle(dstarRunning);
+        dstarRunning=(gw||mmd)&&!d.stopped;setDSTARToggle(dstarRunning);
         if(wasOn){stopDStarLogs();clearLog('logDstarGw');clearLog('logDstarMmd');}
         else startDStarLogs();
-    }finally{sw.classList.remove('busy');}
+    }catch(e){console.warn('toggleDStar error:',e);}
+    finally{sw.classList.remove('busy');}
 }
 async function fetchDStarLogs(){
     try{const r=await fetch('?action=dstar-logs&lines=15');const d=await r.json();
