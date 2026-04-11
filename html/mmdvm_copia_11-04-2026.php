@@ -1,4 +1,4 @@
-$Callsign = $ini['General']['Callsign'] ?? ($ini['General']['Callsign'] ?? '');<?php
+<?php
 require_once __DIR__ . '/auth.php';
 header('X-Content-Type-Options: nosniff');
 $action = $_GET['action'] ?? '';
@@ -622,7 +622,7 @@ button.btn-header { font-family: var(--font-mono); }
 <header class="ctrl-header">
 <img src="Logo_ea3eiz.png" alt="EA3EIZ" style="height:40px;width:auto;">
 <h1>PANEL SISTEMAS DIGITALES</h1>
-<!-- <span class="uptime" id="clock">--:--:--</span> -->
+<span class="uptime" id="clock">--:--:--</span>
 <a href="edit_ini.php?file=displaydriver" target="_blank" class="btn-header cyan"> 📄 Config Display-Driver </a>
 <a href="?action=backup-configs" class="btn-header amber"> 💾 Backup Configs </a>
 <button onclick="openRestore()" class="btn-header cyan"> 📂 Restore Configs </button>
@@ -632,7 +632,7 @@ button.btn-header { font-family: var(--font-mono); }
 
 <!-- ── Station Card — datos dinámicos desde MMDVMHost.ini ── -->
 <div class="station-card">
-    <!-- <div class="station-card-main">
+    <div class="station-card-main">
         <div class="station-callsign" id="scCallsign">📡 —</div>
         <div class="station-location" id="scLocation">— · —</div>
         <div class="station-name-pill" id="scPill">— · —</div>
@@ -654,7 +654,7 @@ button.btn-header { font-family: var(--font-mono); }
         <div class="station-meta-item">
             <span class="station-meta-label">🌍 País</span>
             <span class="station-meta-value violet">🇪🇸 España</span>
-        </div> -->
+        </div>
         <div class="station-divider" style="height:50px;"></div>
         <div class="station-meta-item"><span class="station-meta-label">🖥️ CPU</span><span class="station-meta-value" id="siCpu" style="color:var(--green);">—</span></div>
         <div class="station-meta-item"><span class="station-meta-label">🌡️ Temp</span><span class="station-meta-value" id="siTemp" style="color:var(--amber);">—</span></div>
@@ -663,7 +663,7 @@ button.btn-header { font-family: var(--font-mono); }
         <div class="station-meta-item"><span class="station-meta-label">💿 Disco usado</span><span class="station-meta-value" id="siDisk" style="color:var(--amber);">—</span></div>
         <div class="station-meta-item"><span class="station-meta-label">💿 Disco libre</span><span class="station-meta-value" id="siDiskFree" style="color:var(--green);">—</span></div>
     </div>
-    <!-- <div class="station-assoc">Associació ADER</div> -->
+    <div class="station-assoc">Associació ADER</div>
     <div class="ini-source-badge">desde <span>MMDVMHost.ini</span></div>
 </div>
 
@@ -829,13 +829,13 @@ async function fetchStationInfo() {
         const r = await fetch('?action=station-info');
         const d = await r.json();
         
-        // document.getElementById('scCallsign').textContent = '📡 ' + d.callsign;
-        // const loc = (d.location || 'Barcelona').toUpperCase();
-        // document.getElementById('scLocation').textContent = loc + ' · CATALUÑA · ' + d.locator;
-        // document.getElementById('scPill').textContent     = 'Manel — ' + d.callsign;
-        // document.getElementById('scDmrId').textContent    = d.dmrid;
-        // document.getElementById('scFreq').textContent     = d.freq;
-        // document.getElementById('scLocator').textContent  = d.locator;
+        document.getElementById('scCallsign').textContent = '📡 ' + d.callsign;
+        const loc = (d.location || 'Barcelona').toUpperCase();
+        document.getElementById('scLocation').textContent = loc + ' · CATALUÑA · ' + d.locator;
+        document.getElementById('scPill').textContent     = 'Manel — ' + d.callsign;
+        document.getElementById('scDmrId').textContent    = d.dmrid;
+        document.getElementById('scFreq').textContent     = d.freq;
+        document.getElementById('scLocator').textContent  = d.locator;
         // Campos del nextion DMR
         const nxPort = document.getElementById('nxPort'); if(nxPort) nxPort.textContent = d.port || '—';
         const nxFrx  = document.getElementById('nxFrx');  if(nxFrx)  nxFrx.textContent  = d.freqRX || '—';
@@ -847,9 +847,9 @@ async function fetchStationInfo() {
         const yNxFtx  = document.getElementById('ysfNxFtx');  if(yNxFtx)  yNxFtx.textContent  = d.ysfFreqTX || '—';
         const yNxIp   = document.getElementById('ysfNxIp');   if(yNxIp)   yNxIp.textContent   = d.ysfIp     || '—';
         // Actualizar label en los displays Nextion
-        // const label = d.callsign + ' · ADER';
-        // const nx = document.getElementById('nxStationLabel');   if(nx) nx.textContent = label;
-        // const yx = document.getElementById('ysfStationLabel');  if(yx) yx.textContent = label;
+        const label = d.callsign + ' · ADER';
+        const nx = document.getElementById('nxStationLabel');   if(nx) nx.textContent = label;
+        const yx = document.getElementById('ysfStationLabel');  if(yx) yx.textContent = label;
     } catch(e) { console.warn('station-info error:', e); }
 }
 
