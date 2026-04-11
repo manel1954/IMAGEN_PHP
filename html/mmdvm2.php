@@ -90,6 +90,18 @@ if ($action === 'station-info') {
     }
     $ip = $iniIp ?: '—';
 
+    // ── Datos desde MMDVMYSF.ini ────────────────────────────────
+    $ysfIniPath = '/home/pi/MMDVMHost/MMDVMYSF.ini';
+    $ysfIni = parseMMDVMIni($ysfIniPath);
+
+    $ysfPort  = $ysfIni['Modem']['UARTPort'] ?? ($ysfIni['modem']['UARTPort'] ?? '—');
+    $ysfRxHz  = $ysfIni['Info']['RXFrequency'] ?? '0';
+    $ysfTxHz  = $ysfIni['Info']['TXFrequency'] ?? '0';
+    $ysfFreqRX = formatFreq($ysfRxHz);
+    $ysfFreqTX = formatFreq($ysfTxHz);
+    $ysfIpRaw  = trim($ysfIni['General']['Address'] ?? '');
+    $ysfIp     = ($ysfIpRaw !== '' && $ysfIpRaw !== '0.0.0.0') ? $ysfIpRaw : $ip; // reusar IP de la Pi
+
     header('Content-Type: application/json');
     echo json_encode([
         'callsign' => strtoupper(trim($callsign)),
@@ -103,6 +115,10 @@ if ($action === 'station-info') {
         'desc'     => trim($desc),
         'lat'      => $lat,
         'lon'      => $lon,
+        'ysfPort'  => $ysfPort ?: '—',
+        'ysfFreqRX'=> $ysfFreqRX,
+        'ysfFreqTX'=> $ysfFreqTX,
+        'ysfIp'    => $ysfIp ?: '—',
     ]);
     exit;
 }
@@ -485,7 +501,7 @@ button.btn-header { font-family: var(--font-mono); }
 .nextion::before,.nextion::after { content: '◈'; position: absolute; font-size: .6rem; color: #1a3a4a; }
 .nextion::before { top: .5rem; left: .7rem; }
 .nextion::after { bottom: .5rem; right: .7rem; }
-.nextion-ysf { background: #08060e; border: 2px solid #2d1a4a; border-radius: 6px; box-shadow: 0 0 0 1px #1a0d30, inset 0 0 40px rgba(181,122,255,.04), 0 0 30px rgba(181,122,255,.1); position: relative; overflow: hidden; height: 210px; display: flex; align-items: center; justify-content: center; }
+.nextion-ysf { background: #08060e; border: 2px solid #2d1a4a; border-radius: 6px; box-shadow: 0 0 0 1px #1a0d30, inset 0 0 40px rgba(181,122,255,.04), 0 0 30px rgba(181,122,255,.1); position: relative; overflow: hidden; height: 240px; display: flex; align-items: center; justify-content: center; }
 .nextion-ysf::before,.nextion-ysf::after { content: '◈'; position: absolute; font-size: .6rem; color: #2d1a4a; }
 .nextion-ysf::before { top: .5rem; left: .7rem; }
 .nextion-ysf::after { bottom: .5rem; right: .7rem; }
@@ -529,6 +545,7 @@ button.btn-header { font-family: var(--font-mono); }
 .nx-info-val.cyan  { color: var(--cyan); }
 .nx-info-val.amber { color: var(--amber); }
 .nx-info-val.green { color: var(--green); }
+.nx-infobar-ysf { background: rgba(0,0,0,.4); border-bottom: 1px solid #1a0d30; }
 
 /* ── Last Heard ───────────────────────────────────────────────── */
 .lh-panel { background: var(--surface); border: 3px solid #1a3a4a; border-radius: 6px; display: flex; flex-direction: column; }
@@ -731,6 +748,12 @@ button.btn-header { font-family: var(--font-mono); }
     <div class="panel-label ysf-label">▸ C4FM Display</div>
     <div class="nextion-ysf">
       <div class="nx-topbar ysf-bar"><span class="nx-mode">C4FM · YSF</span><span style="color:#6a3a9a" id="ysfStationLabel">EA3EIZ · ADER</span><span class="nx-dest" id="ysfDest">—</span></div>
+      <div class="nx-infobar nx-infobar-ysf">
+        <span class="nx-info-item"><span class="nx-info-lbl">PORT</span><span class="nx-info-val" id="ysfNxPort">—</span></span>
+        <span class="nx-info-item"><span class="nx-info-lbl">FRX</span><span class="nx-info-val" style="color:#d4a8ff" id="ysfNxFrx">—</span></span>
+        <span class="nx-info-item"><span class="nx-info-lbl">FTX</span><span class="nx-info-val" style="color:#c084ff" id="ysfNxFtx">—</span></span>
+        <span class="nx-info-item"><span class="nx-info-lbl">IP</span><span class="nx-info-val" style="color:#9b6dff" id="ysfNxIp">—</span></span>
+      </div>
       <div class="nx-vu" id="ysfVuLeft"></div><div class="nx-vu right" id="ysfVuRight"></div>
       <div class="nx-center" id="ysfNxCenter"><div class="nx-clock" id="ysfNxClock" style="color:#c084ff;">00:00:00</div><div class="nx-date" id="ysfNxDate" style="color:#9b59d4;">—</div></div>
       <div class="nx-txbar" id="ysfTxBar"></div>
@@ -817,6 +840,11 @@ async function fetchStationInfo() {
         const nxFrx  = document.getElementById('nxFrx');  if(nxFrx)  nxFrx.textContent  = d.freqRX || '—';
         const nxFtx  = document.getElementById('nxFtx');  if(nxFtx)  nxFtx.textContent  = d.freq   || '—';
         const nxIp   = document.getElementById('nxIp');   if(nxIp)   nxIp.textContent   = d.ip     || '—';
+        // Campos nextion C4FM desde MMDVMYSF.ini
+        const yNxPort = document.getElementById('ysfNxPort'); if(yNxPort) yNxPort.textContent = d.ysfPort   || '—';
+        const yNxFrx  = document.getElementById('ysfNxFrx');  if(yNxFrx)  yNxFrx.textContent  = d.ysfFreqRX || '—';
+        const yNxFtx  = document.getElementById('ysfNxFtx');  if(yNxFtx)  yNxFtx.textContent  = d.ysfFreqTX || '—';
+        const yNxIp   = document.getElementById('ysfNxIp');   if(yNxIp)   yNxIp.textContent   = d.ysfIp     || '—';
         // Actualizar label en los displays Nextion
         const label = d.callsign + ' · ADER';
         const nx = document.getElementById('nxStationLabel');   if(nx) nx.textContent = label;
