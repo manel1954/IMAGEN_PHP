@@ -826,8 +826,8 @@ async function fetchStationInfo() {
         const d = await r.json();
         document.getElementById('scCallsign').textContent = '📡 ' + d.callsign;
         const loc = (d.location || 'Barcelona').toUpperCase();
-        document.getElementById('scLocation').textContent = loc + ' · CATALUÑA · ' + d.locator;
-        document.getElementById('scPill').textContent     = 'Manel — ' + d.callsign;
+        // document.getElementById('scLocation').textContent = loc + ' · CATALUÑA · ' + d.locator;
+        // document.getElementById('scPill').textContent     = 'Manel — ' + d.callsign;
         document.getElementById('scDmrId').textContent    = d.dmrid;
         document.getElementById('scFreq').textContent     = d.freq;
         document.getElementById('scLocator').textContent  = d.locator;
