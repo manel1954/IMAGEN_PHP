@@ -741,8 +741,8 @@ button.btn-header { font-family: var(--font-mono); }
 </div>
 
 <!-- ── DStar card ── -->
-<div class="controls-section" style="margin-top:-1rem;">
-  <div class="service-card" style="border-color:rgba(0,229,255,.25);">
+<div class="controls-section">
+  <div class="service-card" style="border-color:rgba(0,229,255,.25);grid-column:1 / -1;">
     <div class="service-card-label" style="color:#00e5ff;">▸ D-STAR · MMDVMHost + DStarGateway</div>
     <div class="toggle-row">
       <span class="toggle-label" id="dstarToggleLabel">D-STAR</span>
