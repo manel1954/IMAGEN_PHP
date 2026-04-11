@@ -370,6 +370,41 @@ if ($action === 'transmission') {
     exit;
 }
 
+// ── DStar status ─────────────────────────────────────────────────────
+if ($action === 'dstar-status') {
+    $gw  = trim(shell_exec('systemctl is-active dstargateway 2>/dev/null'));
+    $mmd = trim(shell_exec('systemctl is-active mmdvmdstar 2>/dev/null'));
+    header('Content-Type: application/json');
+    echo json_encode(['gateway' => $gw, 'mmdvm' => $mmd]);
+    exit;
+}
+
+// ── DStar start ───────────────────────────────────────────────────────
+if ($action === 'dstar-start') {
+    shell_exec('sudo /usr/local/bin/dstar-start.sh 2>/dev/null &');
+    header('Content-Type: application/json');
+    echo json_encode(['ok' => true]);
+    exit;
+}
+
+// ── DStar stop ────────────────────────────────────────────────────────
+if ($action === 'dstar-stop') {
+    shell_exec('sudo /usr/local/bin/dstar-stop.sh 2>/dev/null &');
+    header('Content-Type: application/json');
+    echo json_encode(['ok' => true]);
+    exit;
+}
+
+// ── DStar logs ────────────────────────────────────────────────────────
+if ($action === 'dstar-logs') {
+    $lines = intval($_GET['lines'] ?? 15);
+    $gw  = shell_exec("sudo journalctl -u dstargateway -n {$lines} --no-pager --output=short 2>/dev/null");
+    $mmd = shell_exec("sudo journalctl -u mmdvmdstar  -n {$lines} --no-pager --output=short 2>/dev/null");
+    header('Content-Type: application/json');
+    echo json_encode(['gateway' => htmlspecialchars($gw ?? ''), 'mmdvm' => htmlspecialchars($mmd ?? '')]);
+    exit;
+}
+
 // ── YSF transmission ─────────────────────────────────────────────────
 if ($action === 'ysf-transmission') {
     $log = shell_exec("sudo journalctl -u mmdvmysf -n 300 --no-pager --output=short 2>/dev/null");
@@ -645,15 +680,15 @@ button.btn-header { font-family: var(--font-mono); }
 
 <div class="status-bar">
 <div class="status-item"><div class="dot" id="dot-mosquitto"></div><span>Mosquitto</span></div>
-<div class="status-item"><div class="dot" id="dot-mmdvm"></div><span>MMDVMHost</span></div>
 <div class="status-item"><div class="dot" id="dot-gateway"></div><span>DMRGateway</span></div>
-
+<div class="status-item"><div class="dot" id="dot-mmdvm"></div><span>MMDVMHost</span></div>
 <div class="section-divider"></div>
-<div class="status-item"><div class="dot" id="dot-mmdvmysf"></div><span style="color:#26c6da">MMDVMHost YSF</span></div>
 <div class="status-item"><div class="dot" id="dot-ysf"></div><span style="color:var(--violet)">YSFGateway</span></div>
+<div class="status-item"><div class="dot" id="dot-mmdvmysf"></div><span style="color:#26c6da">MMDVMHost YSF</span></div>
+<div class="section-divider"></div>
+<div class="status-item"><div class="dot" id="dot-dstargw"></div><span style="color:#00e5ff">DStarGW</span></div>
+<div class="status-item"><div class="dot" id="dot-dstarmmd"></div><span style="color:#00e5ff">MMDVMDStar</span></div>
 </div>
-
-<div class="controls-section">
   <!-- ── DMR card ── -->
   <div class="service-card">
     <div class="service-card-label dmr">▸ DMR · MMDVMHost + DMRGateway</div>
@@ -703,7 +738,26 @@ button.btn-header { font-family: var(--font-mono); }
   </div>
 </div>
 
-<!-- ── Displays lado a lado ── -->
+<!-- ── DStar card ── -->
+<div class="controls-section" style="margin-top:-1rem;">
+  <div class="service-card" style="border-color:rgba(0,229,255,.25);">
+    <div class="service-card-label" style="color:#00e5ff;">▸ D-STAR · MMDVMHost + DStarGateway</div>
+    <div class="toggle-row">
+      <span class="toggle-label" id="dstarToggleLabel">D-STAR</span>
+      <label class="sw" id="swDSTAR" style="cursor:pointer;">
+        <input type="checkbox" id="chkDSTAR" onchange="toggleDStar(this)">
+        <span class="sw-track" style="border-color:#999;"></span>
+        <span class="sw-knob" style="background:#e95c04;"></span>
+        <span class="sw-busy-dot"></span>
+      </label>
+      <span class="toggle-status" id="dstarToggleStatus">OFF</span>
+    </div>
+    <div class="auto-badge" id="dstarRefreshBadge" style="display:none;color:#00e5ff;"><div class="dot-sm" style="background:#00e5ff;"></div> D-STAR activo</div>
+    <div class="service-card-btns" style="margin-top:.4rem;">
+      <a href="edit_ini.php?file=dstargateway" target="_blank" class="ini-btn view" style="flex:1;justify-content:center;color:#00e5ff;border-color:rgba(0,229,255,.3);">📄 editar fichero DStarGateway.ini</a>
+    </div>
+  </div>
+</div> -->
 <div class="display-row">
   <div id="dmrDisplayPanel">
     <div class="panel-label">▸ DMR Display</div>
@@ -770,7 +824,12 @@ button.btn-header { font-family: var(--font-mono); }
 <div class="log-panel"><div class="log-panel-header"><span class="svc-name ysf">▸ YSFGateway</span><button class="btn-clear" onclick="clearLog('logYsf')">limpiar</button></div><div class="log-output" id="logYsf">Esperando YSFGateway…</div></div>
 <div class="log-panel"><div class="log-panel-header"><span class="svc-name" style="color:#26c6da">▸ MMDVMHost YSF</span><button class="btn-clear" onclick="clearLog('logMmdvmYsf')">limpiar</button></div><div class="log-output" id="logMmdvmYsf">Esperando MMDVMHost YSF…</div></div>
 </div>
-<!-- ▲▲▲ FIN PANELES YSF ▲▲▲ -->
+<!-- ▼▼▼ PANELES DSTAR — se ocultan cuando D-STAR está OFF ▼▼▼ -->
+<div id="dstarLogPanels" style="display:none;">
+<div class="log-panel"><div class="log-panel-header"><span class="svc-name" style="color:#00e5ff;">▸ DStarGateway</span><button class="btn-clear" onclick="clearLog('logDstarGw')">limpiar</button></div><div class="log-output" id="logDstarGw">Esperando DStarGateway…</div></div>
+<div class="log-panel"><div class="log-panel-header"><span class="svc-name" style="color:#80f0ff;">▸ MMDVMHost DStar</span><button class="btn-clear" onclick="clearLog('logDstarMmd')">limpiar</button></div><div class="log-output" id="logDstarMmd">Esperando MMDVMHost DStar…</div></div>
+</div>
+<!-- ▲▲▲ FIN PANELES DSTAR ▲▲▲ -->
 </div>
 
 </main>
@@ -803,8 +862,8 @@ button.btn-header { font-family: var(--font-mono); }
 </div>
 
 <script>
-let refreshTimer=null,txTimer=null,vuTimer=null,ysfTimer=null,mmdvmYsfTimer=null,ysfTxTimer=null,ysfVuTimer=null;
-let running=false,ysfRunning=false,mmdvmYsfRunning=false,currentlyActive=false,ysfCurrentlyActive=false;
+let refreshTimer=null,txTimer=null,vuTimer=null,ysfTimer=null,mmdvmYsfTimer=null,ysfTxTimer=null,ysfVuTimer=null,dstarTimer=null;
+let running=false,ysfRunning=false,mmdvmYsfRunning=false,dstarRunning=false,currentlyActive=false,ysfCurrentlyActive=false;
 let dmrLastActiveTs=0,ysfLastActiveTs=0;
 const DMR_IDLE_TIMEOUT=12000,YSF_IDLE_TIMEOUT=12000;
 
@@ -926,6 +985,49 @@ async function checkYSFStatus(){try{const r=await fetch('?action=ysf-status');co
 async function checkMMDVMYSFStatus(){try{const r=await fetch('?action=mmdvmysf-status');const d=await r.json();mmdvmYsfRunning=d.mmdvmysf==='active';setDot('dot-mmdvmysf',mmdvmYsfRunning?'active':'off');setYSFToggle(ysfRunning||mmdvmYsfRunning);}catch(e){}}
 function setDot(id,state){document.getElementById(id).className='dot'+(state==='active'?' active':state==='error'?' error':'');}
 
+function setDSTARToggle(on){
+    const chk=document.getElementById('chkDSTAR'),lbl=document.getElementById('dstarToggleLabel'),sta=document.getElementById('dstarToggleStatus');
+    chk.checked=on;
+    lbl.style.color=on?'#00e5ff':'';
+    sta.className='toggle-status'+(on?' on':'');
+    sta.textContent=on?'ON':'OFF';
+    document.getElementById('dstarRefreshBadge').style.display=on?'flex':'none';
+    document.getElementById('dstarLogPanels').style.display=on?'contents':'none';
+}
+async function checkDStarStatus(){
+    try{const r=await fetch('?action=dstar-status');const d=await r.json();
+        const gw=d.gateway==='active',mmd=d.mmdvm==='active';
+        setDot('dot-dstargw',gw?'active':'off');
+        setDot('dot-dstarmmd',mmd?'active':'off');
+        dstarRunning=gw||mmd;setDSTARToggle(dstarRunning);
+        if(dstarRunning)startDStarLogs();
+    }catch(e){}
+}
+async function toggleDStar(chk){
+    const wasOn=!chk.checked;const sw=document.getElementById('swDSTAR');chk.checked=wasOn;sw.classList.add('busy');
+    try{
+        await fetch(wasOn?'?action=dstar-stop':'?action=dstar-start');
+        await new Promise(r=>setTimeout(r,3000));
+        const r=await fetch('?action=dstar-status');const d=await r.json();
+        const gw=d.gateway==='active',mmd=d.mmdvm==='active';
+        setDot('dot-dstargw',gw?'active':'off');setDot('dot-dstarmmd',mmd?'active':'off');
+        dstarRunning=gw||mmd;setDSTARToggle(dstarRunning);
+        if(wasOn){stopDStarLogs();clearLog('logDstarGw');clearLog('logDstarMmd');}
+        else startDStarLogs();
+    }finally{sw.classList.remove('busy');}
+}
+async function fetchDStarLogs(){
+    try{const r=await fetch('?action=dstar-logs&lines=15');const d=await r.json();
+        ['logDstarGw:gateway','logDstarMmd:mmdvm'].forEach(pair=>{
+            const[id,key]=pair.split(':');const el=document.getElementById(id);
+            const atBot=el.scrollHeight-el.clientHeight<=el.scrollTop+10;
+            el.innerHTML=colorize(d[key]);if(atBot)el.scrollTop=el.scrollHeight;
+        });
+    }catch(e){}
+}
+function startDStarLogs(){fetchDStarLogs();dstarTimer=setInterval(fetchDStarLogs,5000);}
+function stopDStarLogs(){clearInterval(dstarTimer);dstarTimer=null;}
+
 async function toggleServices(chk){const wasOn=!chk.checked;const sw=document.getElementById('swDMR');chk.checked=wasOn;sw.classList.add('busy');try{await fetch(wasOn?'?action=stop':'?action=start');await new Promise(r=>setTimeout(r,2200));const r=await fetch('?action=status');const d=await r.json();const gw=d.gateway==='active',mmd=d.mmdvm==='active';running=gw||mmd;setDot('dot-gateway',gw?'active':'off');setDot('dot-mmdvm',mmd?'active':'off');setDot('dot-mosquitto',gw?'active':'off');setDMRToggle(running);if(wasOn){stopRefresh();clearLog('logGw');clearLog('logMmd');showIdle();document.getElementById('lhBody').innerHTML='<div class="lh-empty">Sin actividad reciente</div>';}else startRefresh();}finally{sw.classList.remove('busy');}}
 async function toggleYSF(chk){const wasOn=!chk.checked;const sw=document.getElementById('swYSF');chk.checked=wasOn;sw.classList.add('busy');try{if(wasOn){await fetch('?action=ysf-stop');await new Promise(r=>setTimeout(r,1000));await fetch('?action=mmdvmysf-stop');await new Promise(r=>setTimeout(r,2000));clearLog('logYsf');clearLog('logMmdvmYsf');stopYSFLogs();stopMMDVMYSFLogs();showYSFIdle();document.getElementById('ysfLhBody').innerHTML='<div class="lh-empty">Sin actividad C4FM</div>';}else{await fetch('?action=mmdvmysf-start');await new Promise(r=>setTimeout(r,2000));await fetch('?action=ysf-start');await new Promise(r=>setTimeout(r,1500));startYSFLogs();startMMDVMYSFLogs();}await checkYSFStatus();await checkMMDVMYSFStatus();}finally{sw.classList.remove('busy');}}
 
@@ -955,8 +1057,8 @@ fetchSysInfo();setInterval(fetchSysInfo,8000);
 (async()=>{
     await fetchStationInfo();
     setInterval(fetchStationInfo,60000);
-    await checkStatus();await checkYSFStatus();await checkMMDVMYSFStatus();
-    setInterval(checkStatus,10000);setInterval(checkYSFStatus,8000);setInterval(checkMMDVMYSFStatus,8000);
+    await checkStatus();await checkYSFStatus();await checkMMDVMYSFStatus();await checkDStarStatus();
+    setInterval(checkStatus,10000);setInterval(checkYSFStatus,8000);setInterval(checkMMDVMYSFStatus,8000);setInterval(checkDStarStatus,10000);
     if(!running){showIdle();fetchTransmission();}
     showYSFIdle();startYSFLogs();startMMDVMYSFLogs();startYSFTransmissionPoll();
 })();
