@@ -572,8 +572,8 @@ button.btn-header { font-family: var(--font-mono); }
 .lh-row-ysf.lh-active { background: rgba(181,122,255,.08); }
 .lh-tx-dot-ysf { width: 6px; height: 6px; border-radius: 50%; background: var(--violet); box-shadow: 0 0 6px var(--violet); animation: pulse 1s infinite; flex-shrink: 0; }
 .lh-call-ysf { font-family: var(--font-mono); font-size: .82rem; color: var(--violet); letter-spacing: .05em; font-weight: bold; }
-.lh-src-ysf.rf { color: var(--green); font-family: var(--font-mono); font-size: .6rem; }
-.lh-src-ysf.net { color: var(--cyan); font-family: var(--font-mono); font-size: .6rem; }
+#ysfLastHeardPanel { grid-column: 2; }
+@media (max-width:900px) { #ysfLastHeardPanel { grid-column: 1; } }
 
 /* ── Logs ─────────────────────────────────────────────────────── */
 .log-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1.2rem; }
