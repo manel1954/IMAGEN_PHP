@@ -633,9 +633,9 @@ button.btn-header { font-family: var(--font-mono); }
 <!-- ── Station Card — datos dinámicos desde MMDVMHost.ini ── -->
 <div class="station-card">
     <div class="station-card-main">
-        <div class="station-callsign" id="scCallsign"></div>
-        <div class="station-location" id="scLocation"></div>
-        <div class="station-name-pill" id="scPill"></div>
+        <div class="station-callsign"></div>
+        <div class="station-location"></div>
+        <div class="station-name-pill"></div>
     </div>
     <div class="station-divider"></div>
     <div class="station-meta">
@@ -649,7 +649,7 @@ button.btn-header { font-family: var(--font-mono); }
         </div>
         <div class="station-meta-item">
             <span class="station-meta-label"></span>
-            <span class="station-meta-value green" id="scLocator">—</span>
+            <span class="station-meta-value green" id="scLocator"></span>
         </div>
         <div class="station-meta-item">
             <span class="station-meta-label"></span>
