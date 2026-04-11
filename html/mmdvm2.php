@@ -757,8 +757,12 @@ button.btn-header { font-family: var(--font-mono); }
 
 <!-- ── Logs ── -->
 <div class="log-grid" style="margin-top:2rem;">
+<!-- ▼▼▼ PANELES DMR — se ocultan cuando DMR está OFF ▼▼▼ -->
+<div id="dmrLogPanels" style="display:contents;">
 <div class="log-panel"><div class="log-panel-header"><span class="svc-name gw">▸ DMRGateway</span><button class="btn-clear" onclick="clearLog('logGw')">limpiar</button></div><div class="log-output" id="logGw">Esperando servicios…</div></div>
 <div class="log-panel"><div class="log-panel-header"><span class="svc-name">▸ MMDVMHost</span><button class="btn-clear" onclick="clearLog('logMmd')">limpiar</button></div><div class="log-output" id="logMmd">Esperando servicios…</div></div>
+</div>
+<!-- ▲▲▲ FIN PANELES DMR ▲▲▲ -->
 <div class="log-panel"><div class="log-panel-header"><span class="svc-name ysf">▸ YSFGateway</span><button class="btn-clear" onclick="clearLog('logYsf')">limpiar</button></div><div class="log-output" id="logYsf">Esperando YSFGateway…</div></div>
 <div class="log-panel"><div class="log-panel-header"><span class="svc-name" style="color:#26c6da">▸ MMDVMHost YSF</span><button class="btn-clear" onclick="clearLog('logMmdvmYsf')">limpiar</button></div><div class="log-output" id="logMmdvmYsf">Esperando MMDVMHost YSF…</div></div>
 </div>
@@ -804,12 +808,6 @@ async function fetchStationInfo() {
         const r = await fetch('?action=station-info');
         const d = await r.json();
         document.getElementById('scCallsign').textContent = '📡 ' + d.callsign;
-        // const loc = (d.location || 'Barcelona').toUpperCase();
-        // document.getElementById('scLocation').textContent = loc + ' · CATALUÑA · ' + d.locator;
-        // document.getElementById('scPill').textContent     = 'Manel — ' + d.callsign;
-        // document.getElementById('scDmrId').textContent    = d.dmrid;
-        // document.getElementById('scFreq').textContent     = d.freq;
-        // document.getElementById('scLocator').textContent  = d.locator;
         // Nextion DMR
         const nxPort = document.getElementById('nxPort'); if(nxPort) nxPort.textContent = d.port    || '—';
         const nxFrx  = document.getElementById('nxFrx');  if(nxFrx)  nxFrx.textContent  = d.freqRX  || '—';
@@ -871,7 +869,18 @@ setInterval(updateClock,1000);updateClock();
 
 function esc(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
 
-function setDMRToggle(on){const chk=document.getElementById('chkDMR'),lbl=document.getElementById('dmrToggleLabel'),sta=document.getElementById('dmrToggleStatus');chk.checked=on;lbl.className='toggle-label'+(on?' on-dmr':'');sta.className='toggle-status'+(on?' on':'');sta.textContent=on?'ON':'OFF';document.getElementById('autoRefreshBadge').style.display=on?'flex':'none';}
+// ── setDMRToggle — MODIFICADO: oculta/muestra paneles de log DMR ────
+function setDMRToggle(on){
+    const chk=document.getElementById('chkDMR'),lbl=document.getElementById('dmrToggleLabel'),sta=document.getElementById('dmrToggleStatus');
+    chk.checked=on;
+    lbl.className='toggle-label'+(on?' on-dmr':'');
+    sta.className='toggle-status'+(on?' on':'');
+    sta.textContent=on?'ON':'OFF';
+    document.getElementById('autoRefreshBadge').style.display=on?'flex':'none';
+    // Mostrar u ocultar los dos paneles de log DMR
+    document.getElementById('dmrLogPanels').style.display=on?'contents':'none';
+}
+
 function setYSFToggle(on){const chk=document.getElementById('chkYSF'),lbl=document.getElementById('ysfToggleLabel'),sta=document.getElementById('ysfToggleStatus');chk.checked=on;lbl.className='toggle-label'+(on?' on-ysf':'');sta.className='toggle-status'+(on?' on':'');sta.textContent=on?'ON':'OFF';document.getElementById('ysfRefreshBadge').style.display=on?'flex':'none';}
 
 function showIdle(){currentlyActive=false;animateVU(false,'dmr');document.getElementById('nxTxBar').classList.remove('active');document.getElementById('nxTG').textContent='—';document.getElementById('nxSlot').textContent='—';document.getElementById('nxDmrid').textContent='—';const src=document.getElementById('nxSource');src.textContent='';src.className='nx-source';document.getElementById('nxCenter').innerHTML='<div class="nx-clock" id="nxClock">00:00:00</div><div class="nx-date" id="nxDate">—</div>';updateClock();}
