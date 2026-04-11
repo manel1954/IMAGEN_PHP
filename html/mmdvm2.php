@@ -628,7 +628,7 @@ button.btn-header { font-family: var(--font-mono); }
 
 <!-- ── Station Card — datos dinámicos desde MMDVMHost.ini ── -->
 <div class="station-card">
-    <!-- <div class="station-card-main">
+    <div class="station-card-main">
         <div class="station-callsign" id="scCallsign">📡 —</div>
         <div class="station-location" id="scLocation">— · —</div>
         <div class="station-name-pill" id="scPill">— · —</div>
@@ -647,7 +647,7 @@ button.btn-header { font-family: var(--font-mono); }
             <span class="station-meta-label">📍 Locator</span>
             <span class="station-meta-value green" id="scLocator">—</span>
         </div>
-        <div class="station-meta-item">
+        <!-- <div class="station-meta-item">
             <span class="station-meta-label">🌍 País</span>
             <span class="station-meta-value violet">🇪🇸 España</span>
         </div> -->
