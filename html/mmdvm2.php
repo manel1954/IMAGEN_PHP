@@ -826,8 +826,8 @@ const YSF_IDLE_TIMEOUT=12000;
 // ── Station card desde MMDVMHost.ini ────────────────────────────────
 async function fetchStationInfo() {
     try {
-        // const r = await fetch('?action=station-info');
-        // const d = await r.json();
+        const r = await fetch('?action=station-info');
+        const d = await r.json();
         
         // document.getElementById('scCallsign').textContent = '📡 ' + d.callsign;
         // const loc = (d.location || 'Barcelona').toUpperCase();
