@@ -74,12 +74,14 @@ if ($action === 'station-info') {
         ? latLonToLocator($lat, $lon)
         : 'JN11CK';
 
-    // Puerto del modem
-    $port = $ini['Modem']['Port'] ?? ($ini['modem']['Port'] ?? '');
+    // Puerto del modem — [Modem] UARTPort=
+    $port = $ini['Modem']['UARTPort'] ?? ($ini['modem']['UARTPort'] ?? '');
 
-    // Frecuencia RX
-    $rxhz  = $ini['General']['RXFrequency'] ?? ($ini['General']['Frequency'] ?? '0');
+    // Frecuencias RX y TX desde [Info]
+    $rxhz   = $ini['Info']['RXFrequency'] ?? '0';
+    $txhz   = $ini['Info']['TXFrequency'] ?? $txfreq;
     $freqRX = formatFreq($rxhz);
+    $freq   = formatFreq($txhz);   // sobreescribir freq con el valor de [Info]
 
     // IP: primero Address del ini, si vacía o 0.0.0.0 usar IP real de la Pi
     $iniIp = trim($ini['General']['Address'] ?? '');
