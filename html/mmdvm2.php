@@ -485,7 +485,7 @@ button.btn-header { font-family: var(--font-mono); }
 .section-divider { width: 1px; height: 20px; background: var(--border); margin: 0 .5rem; }
 
 /* ── Controls ─────────────────────────────────────────────────── */
-.controls-section { display: grid; grid-template-columns: 1fr 1fr; gap: 1.2rem; margin-bottom: 2rem; }
+.controls-section { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 1.2rem; margin-bottom: 2rem; }
 @media (max-width:800px) { .controls-section { grid-template-columns: 1fr; } }
 .service-card { background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 1.2rem 1.6rem; }
 .service-card-label { font-family: var(--font-mono); font-size: .7rem; letter-spacing: .15em; text-transform: uppercase; margin-bottom: 1rem; }
@@ -738,10 +738,8 @@ button.btn-header { font-family: var(--font-mono); }
       <a href="edit_ini.php?file=ysfgateway" target="_blank" class="ini-btn view ysf" style="flex:1;justify-content:center;">📄 editar fichero YSFGateway.ini</a>
     </div>
   </div>
-</div>
 
-<!-- ── DStar card ── -->
-<div class="controls-section">
+  <!-- ── DStar card ── -->
   <div class="service-card" style="border-color:rgba(0,229,255,.25);">
     <div class="service-card-label" style="color:#00e5ff;">▸ D-STAR · MMDVMHost + DStarGateway</div>
     <div class="toggle-row">
@@ -760,6 +758,7 @@ button.btn-header { font-family: var(--font-mono); }
     </div>
   </div>
 </div>
+
 <div class="display-row">
   <div id="dmrDisplayPanel">
     <div class="panel-label">▸ DMR Display</div>
