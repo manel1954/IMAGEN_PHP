@@ -55,24 +55,24 @@ function formatFreq($hz) {
     return number_format($mhz, 3, '.', '') . ' MHz';
 }
 
-// ── Station Info desde MMDVMHost.ini ─────────────────────────────────
+// ── // ── Datos desdeS MMDVMHost.ini ─────────────────────────────────
 if ($action === 'station-info') {
     $iniPath = '/home/pi/MMDVMHost/MMDVMHost.ini';
     $ini = parseMMDVMIni($iniPath);
 
-    $callsign = $ini['General']['Callsign']    ?? 'EA3EIZ';
-    $dmrid    = $ini['General']['Id']          ?? '214317500';
-    $txfreq   = $ini['General']['TXFrequency'] ?? ($ini['General']['Frequency'] ?? '430000000');
+    // $callsign = $ini['General']['Callsign']    ?? 'EA3EIZ';
+    // $dmrid    = $ini['General']['Id']          ?? '214317526';
+    // $txfreq   = $ini['General']['TXFrequency'] ?? ($ini['General']['Frequency'] ?? '430000000');
     $freq     = formatFreq($txfreq);
 
-    $lat      = $ini['Info']['Latitude']    ?? '41.3851';
-    $lon      = $ini['Info']['Longitude']   ?? '2.1734';
-    $location = $ini['Info']['Location']    ?? 'Barcelona';
-    $desc     = $ini['Info']['Description'] ?? '';
+    // $lat      = $ini['Info']['Latitude']    ?? '41.3851';
+    // $lon      = $ini['Info']['Longitude']   ?? '2.1734';
+    // $location = $ini['Info']['Location']    ?? 'Barcelona';
+    // $desc     = $ini['Info']['Description'] ?? '';
 
-    $locator  = (floatval($lat) != 0 || floatval($lon) != 0)
-        ? latLonToLocator($lat, $lon)
-        : 'JN11CK';
+    // $locator  = (floatval($lat) != 0 || floatval($lon) != 0)
+    //     ? latLonToLocator($lat, $lon)
+    //     : 'JN11CK';
 
     // Puerto del modem — [Modem] UARTPort=
     $port = $ini['Modem']['UARTPort'] ?? ($ini['modem']['UARTPort'] ?? '');
