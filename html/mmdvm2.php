@@ -739,14 +739,14 @@ button.btn-header { font-family: var(--font-mono); }
 
 <!-- ── Últimos escuchados lado a lado ── -->
 <div class="display-row" style="margin-top:1rem;">
-  <div>
+  <div id="dmrLastHeardPanel">
     <div class="panel-label">▸ Últimos escuchados DMR</div>
     <div class="lh-panel">
       <div class="lh-header"><span>Indicativo</span><span>Nombre</span><span>TG</span><span>Hora</span><span>Src</span></div>
       <div class="lh-body" id="lhBody"><div class="lh-empty">Sin actividad reciente</div></div>
     </div>
   </div>
-  <div>
+  <div id="ysfLastHeardPanel">
     <div class="panel-label ysf-label">▸ Últimos escuchados C4FM</div>
     <div class="lh-panel-ysf">
       <div class="lh-header-ysf"><span>Indicativo</span><span>Nombre</span><span>Hora</span><span>Src</span></div>
@@ -883,11 +883,13 @@ function setDMRToggle(on){
     document.getElementById('autoRefreshBadge').style.display=on?'flex':'none';
     // Mostrar u ocultar los dos paneles de log DMR
     document.getElementById('dmrLogPanels').style.display=on?'contents':'none';
+    document.getElementById('dmrLastHeardPanel').style.display=on?'':'none';
 }
 
 function setYSFToggle(on){const chk=document.getElementById('chkYSF'),lbl=document.getElementById('ysfToggleLabel'),sta=document.getElementById('ysfToggleStatus');chk.checked=on;lbl.className='toggle-label'+(on?' on-ysf':'');sta.className='toggle-status'+(on?' on':'');sta.textContent=on?'ON':'OFF';document.getElementById('ysfRefreshBadge').style.display=on?'flex':'none';
     // Mostrar u ocultar los dos paneles de log YSF
     document.getElementById('ysfLogPanels').style.display=on?'contents':'none';
+    document.getElementById('ysfLastHeardPanel').style.display=on?'':'none';
 }
 
 function showIdle(){currentlyActive=false;animateVU(false,'dmr');document.getElementById('nxTxBar').classList.remove('active');document.getElementById('nxTG').textContent='—';document.getElementById('nxSlot').textContent='—';document.getElementById('nxDmrid').textContent='—';const src=document.getElementById('nxSource');src.textContent='';src.className='nx-source';document.getElementById('nxCenter').innerHTML='<div class="nx-clock" id="nxClock">00:00:00</div><div class="nx-date" id="nxDate">—</div>';updateClock();}
