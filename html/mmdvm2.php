@@ -758,7 +758,7 @@ button.btn-header { font-family: var(--font-mono); }
       <a href="edit_ini.php?file=dstargateway" target="_blank" class="ini-btn view" style="flex:1;justify-content:center;color:#00e5ff;border-color:rgba(0,229,255,.3);">📄 editar fichero DStarGateway.ini</a>
     </div>
   </div>
-</div> -->
+</div>
 <div class="display-row">
   <div id="dmrDisplayPanel">
     <div class="panel-label">▸ DMR Display</div>
